@@ -5,10 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class committeepayment extends Model
+class committememberpayment extends Model
 {
-    use HasFactory;
-    protected $table ='committeepayment';
+    protected $table ='committememberpayment';
 
     protected $fillable = [
         'committeRefno',
@@ -22,5 +21,6 @@ class committeepayment extends Model
         'receipt',
         'paymentdate',
         'roleName',
+
        ];
 }

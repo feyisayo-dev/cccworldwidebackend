@@ -223,4 +223,9 @@ Route::post('changeCommitteeMember',[adminController::class,'changeCommitteeMemb
 
 //payment
 Route::post('addCommitteePayment',[MemberController::class,'addCommitteePayment']);
+Route::get('getAMemberPaymentsForAllcommittees/{memberId}',[MemberController::class,'GetACommitteeMemberPayment']);// Member payments in all committes
+Route::get('getAMemberPaymentForAcommitte/{memberId}/{committeRefno}',[MemberController::class,'GetMemberPymtforACommitee']);// Member payments in one committes
+
+Route::get('getACommitteeNamePayment/{Id}',[MemberController::class,'GetACommitteeNamePayment']);
+Route::post('changeCommitteePayment',[MemberController::class,'changeCommitteePayment']);
 

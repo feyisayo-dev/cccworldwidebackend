@@ -92,6 +92,9 @@ class adminController extends Controller
 
     public function addCommittee(Request $request)
     {
+
+    error_log( json_encode($request->all()));
+
         $validator = Validator::make($request->all(), [
             'committename' => 'required|string|max:191',
             'parishcode' => 'required|string|max:191',
@@ -148,6 +151,7 @@ class adminController extends Controller
                         return response()->json([
                             'status' => 200,
                             'message' => $request->committename . ' committe for ' . $parishName . '  created sucessfully',
+                            'data'=> $committeeCreateResponse,
                         ], 200);
                     } else {
                         return response()->json([
@@ -180,11 +184,18 @@ class adminController extends Controller
     public function FetchAllCommittee()
     {
         $allcommittee = committee::all();
-        if ($allcommittee->count() > 0) {
+        $committeCount=$allcommittee->count();
+        $page = 1;
+        $pageSize = 10;
+        $totalPages = ceil($committeCount / $pageSize);
+        if ($committeCount > 0) {
             return response()->json([
                 'status' => 200,
                 'message' => 'All Committee Record fetched successfully',
-                'commitees ' => $allcommittee,
+                'Allcommittee' => $allcommittee,
+                'totalParish' => $committeCount,
+                'totalPages' => $totalPages,
+                'page' => $page,
             ], 200);
         } else {
             return response()->json([
@@ -442,7 +453,8 @@ class adminController extends Controller
             ], 422);
         }
 
-        $getcommitteeMember = CommitteMember::where('memberId',$request->new_member_id)->where('committeRefno', $request->committeRefno)->first();
+        $getcommitteeMember = CommitteMember::where('memberId',$request->new_member_id)
+                                             ->where('committeRefno', $request->committeRefno)->first();
 
         if ($getcommitteeMember){
          return response()->json([

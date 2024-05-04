@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('memberpayment', function (Blueprint $table) {
+        Schema::create('committememberpayment', function (Blueprint $table) {
             $table->id();
             $table->string('committename');
             $table->string('parishcode');
@@ -22,6 +22,8 @@ return new class extends Migration
             $table->string('paidby');
             $table->string('amount');
             $table->string('receipt');
+            $table->string('committeRefno');
+	        $table->string('roleName');
             $table->timestamps();
         });
     }
@@ -31,7 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('memberpayment');
-
+        Schema::dropIfExists('committememberpayment');
     }
 };

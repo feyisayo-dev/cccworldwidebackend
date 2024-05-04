@@ -2,44 +2,31 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\tithe;
-use App\Models\member;
-use Illuminate\Http\Request;
-use App\Traits\HttpResponses;
-use App\Models\juvelineharvest;
-use Illuminate\Http\JsonResponse;
-use App\Models\committemember;
-use App\Models\committeepayment;
-// use Illuminate\Support\Facades\Auth;
-use Laravel\Sanctum\HasApiTokens;
-use App\Http\Requests\LoginRequest;
 use App\Http\Controllers\Api\adminController;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
+use App\Http\Requests\LoginRequest;
 use App\Http\Requests\StoreUserRequest;
 use App\Models\committee;
-use Illuminate\Contracts\Validation\Rule;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Foundation\Http\FormRequest;
+use App\Models\committemember;
+use App\Models\committememberpayment;
+use App\Models\juvelineharvest;
+use App\Models\member;
+use App\Models\tithe;
+use App\Traits\HttpResponses;
+use Illuminate\Http\Request;
 use Illuminate\Http\ResponseTrait\original;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
-
-
-
+use Illuminate\Support\Facades\Validator;
 
 class MemberController extends Controller
 {
     use HttpResponses;
 
-
-
     // public function login(LoginRequest $request){
 
-
     //     $member  = member::where('email', '=', $request->email)->first();
-
 
     //     if(!$member ){
 
@@ -63,23 +50,21 @@ class MemberController extends Controller
     //     }
     // }
 
+    public function login(LoginRequest $request)
+    {
 
-    public function login(LoginRequest $request){
-
-
-        $member  = member::where('email', '=', $request->email)->first();
+        $member = member::where('email', '=', $request->email)->first();
         if (!$member) {
             return $this->error('',
-            "Email address not found! Kindly register as a member to login",
-            200);
+                "Email address not found! Kindly register as a member to login",
+                200);
         } else {
             if ($member && Hash::check($request['password'], $member->password)) {
 
-                $thumbnailPath =Storage::url($member->thumbnail);
+                $thumbnailPath = Storage::url($member->thumbnail);
                 $thumnailPublicpath = URL::to($thumbnailPath);
 
-
-                if( $member['role']==='Client'){
+                if ($member['role'] === 'Client') {
 
                     $response = [
                         'userAbilities' => [
@@ -98,14 +83,16 @@ class MemberController extends Controller
                             // $member
                             'id' => $member->id,
                             'fullName' => $member->sname, // Adjust the attribute names accordingly
-                            'username' => $member->username,
-                            'avatar' =>$thumnailPublicpath,
+                            'UserId' => $member->UserId,
+                            'avatar' => $thumnailPublicpath,
                             'email' => $member->email,
                             'role' => $member->role,
+                            'parishcode' => $member->parishcode,
+                            'parishname' => $member->parishname,
                             // ... add other user data as needed
                         ],
                     ];
-                }else {
+                } else {
                     $response = [
                         'userAbilities' => [
                             [
@@ -118,11 +105,13 @@ class MemberController extends Controller
                         'userData' => [
                             // $member
                             'id' => $member->id,
-                            'fullName' => $member->sname .' '. $member->fname, // Adjust the attribute names accordingly
-                            'username' => $member->username,
+                            'fullName' => $member->sname . ' ' . $member->fname, // Adjust the attribute names accordingly
+                            'UserId' => $member->UserId,
                             'avatar' => $thumnailPublicpath,
                             'email' => $member->email,
                             'role' => $member->role,
+                            'parishcode' => $member->parishcode,
+                            'parishname' => $member->parishname,
                             // ... add other user data as needed
                         ],
                     ];
@@ -135,31 +124,28 @@ class MemberController extends Controller
                 ];
 
                 return response()->json($response,
-                401);
+                    401);
             }
 
         }
     }
 
-
     public function Addmember(StoreUserRequest $request)
     {
 
-        $fetchparish=adminController::FetchAllParishes($request->parishcode);
+        $fetchparish = adminController::FetchAllParishes($request->parishcode);
 
-        $decode_Parish=adminController::decodeParishName($fetchparish);
+        $decode_Parish = adminController::decodeParishName($fetchparish);
 
-        $parishName=$decode_Parish['parishname'];
+        $parishName = $decode_Parish['parishname'];
 
-
-
-        $append_sender= $from=$parishName;
-        $body='Welcome to '. $parishName. ', We are happy to see you worship the Lord with us , God will meet you at your point of need. Amen';
-        $api_token='Bw3uqEgd4AF7c6A7Gv5BGWJTTfCP5V9psAs1xM8rGPd59eWSNqYy0QSJSJZ9';
-        $direct_refund='direct-hosted';
-        $to=$request->mobile;
-         $member = validator($request->all());
-         $ParismemberCount = member::where('parishcode',$request->parishcode)->count();
+        $append_sender = $from = $parishName;
+        $body = 'Welcome to ' . $parishName . ', We are happy to see you worship the Lord with us , God will meet you at your point of need. Amen';
+        $api_token = 'Bw3uqEgd4AF7c6A7Gv5BGWJTTfCP5V9psAs1xM8rGPd59eWSNqYy0QSJSJZ9';
+        $direct_refund = 'direct-hosted';
+        $to = $request->mobile;
+        $member = validator($request->all());
+        $ParismemberCount = member::where('parishcode', $request->parishcode)->count();
 
         if ($ParismemberCount == 0) {
             $ParismemberCount = 1;
@@ -171,24 +157,21 @@ class MemberController extends Controller
             $num_padded = $ParismemberCount + 1;
         }
 
-
-
         if ($request->hasFile('thumbnail')) {
 
             $fileUploaded = $request->file('thumbnail');
-            $memberNewPic = $request->parishcode.$num_padded.'.'. $fileUploaded->getClientOriginalExtension();
+            $memberNewPic = $request->parishcode . $num_padded . '.' . $fileUploaded->getClientOriginalExtension();
             $thumbnailPath = $fileUploaded->storeAs('thumbnails', $memberNewPic, 'public');
 
             //    Store new profile image
 
-
-            $baseUrl = config('app.url') . '/laravel/storage/app/public/'. $thumbnailPath;
+            $baseUrl = config('app.url') . '/laravel/storage/app/public/' . $thumbnailPath;
         } else {
             $thumbnailPath = ""; // Or provide a default image path
         }
 
         $member = member::create([
-            'UserId' => $request->parishcode. $num_padded,
+            'UserId' => $request->parishcode . $num_padded,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'sname' => $request->sname,
@@ -209,19 +192,17 @@ class MemberController extends Controller
             'Status' => $request->Status,
             'thumbnail' => $thumbnailPath,
             'parishcode' => $request->parishcode,
-            'parishname'=> $parishName,
-            'role'=>'Client',
+            'parishname' => $parishName,
+            'role' => 'Client',
         ]);
-
 
         if ($member) {
 
-          $sendRegistrationSms= adminController::sendSmsViaApp($from,$to, $body, $api_token, $append_sender,$direct_refund);
+            $sendRegistrationSms = adminController::sendSmsViaApp($from, $to, $body, $api_token, $append_sender, $direct_refund);
 
-
-          return response()->json([
-              'data'=> $member,
-              'sms'=> $sendRegistrationSms,
+            return response()->json([
+                'data' => $member,
+                'sms' => $sendRegistrationSms,
                 'Member created sucessfully',
                 // 'token'=>$member->createToken('API Token of '.$member->email)->plainTextToken
             ]);
@@ -233,8 +214,6 @@ class MemberController extends Controller
             ], 200);
         }
 
-
-
     }
 
     public function fetchAllMembers()
@@ -242,28 +221,27 @@ class MemberController extends Controller
 
         $members = member::with('children')->get();
         $memberCount = $members->count();
-        $page=1;
+        $page = 1;
         $pageSize = 10;
         $totalPages = ceil($memberCount / $pageSize);
 
         if ($members->count() > 0) {
-
 
             return response()->json([
                 'status' => 200,
                 'message' => 'Record fetched successfully',
                 'usersDetails' => $members->toArray(),
                 'users' => array_map(function ($member) {
-                    if(empty($member['thumbnail'])){
-                        $thumnailPublicpath=' ';
-                    }else{
+                    if (empty($member['thumbnail'])) {
+                        $thumnailPublicpath = ' ';
+                    } else {
 
-                        $thumbnailPath =Storage::url($member['thumbnail']);
+                        $thumbnailPath = Storage::url($member['thumbnail']);
                         $thumnailPublicpath = URL::to($thumbnailPath);
                     }
                     return [
                         'id' => $member['id'],
-                        'fullName' => $member['sname'].' '.$member['fname'], // Adjust the attribute names accordingly
+                        'fullName' => $member['sname'] . ' ' . $member['fname'], // Adjust the attribute names accordingly
                         'gender' => $member['Gender'],
                         'avatar' => $thumnailPublicpath,
                         'email' => $member['email'],
@@ -311,19 +289,17 @@ class MemberController extends Controller
 
     }
 
-
     public static function GetMember($UserId)
     {
         $member = Member::with('children')
-        ->where('UserId', '=', $UserId)
-        ->get();
-
+            ->where('UserId', '=', $UserId)
+            ->get();
 
         if ($member) {
             return response()->json([
-                'status'=> 200,
-                'message'=> 'Record fetched successfully',
-                'member'=> $member,
+                'status' => 200,
+                'message' => 'Record fetched successfully',
+                'member' => $member,
             ], 200);
         } else {
             return response()->json([
@@ -336,9 +312,6 @@ class MemberController extends Controller
 
     public function updateMember(Request $request, String $UserId)
     {
-
-
-
         $validator = Validator::make($request->all(), [
             'email' => 'required|email |max:191',
             'sname' => 'required|string|max:191',
@@ -360,8 +333,6 @@ class MemberController extends Controller
             'thumbnail' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-
-
         if ($validator->fails()) {
             return response()->json([
                 'status' => 422,
@@ -372,63 +343,64 @@ class MemberController extends Controller
 
             if ($request->hasFile('thumbnail')) {
                 $file = $request->file('thumbnail');
-                $Thumbnail =  $UserId.'.'. $file->getClientOriginalExtension();
+                $Thumbnail = $UserId . '.' . $file->getClientOriginalExtension();
                 $thumbnailPath = $file->storeAs('thumbnails', $Thumbnail, 'public');
             } else {
                 $thumbnailPath = null; // Or provide a default image path
             }
 
-            $fetchparish=adminController::FetchAllParishes($request->parishcode)->original['Allparish'];
-            $parishNames =implode(', ', array_column($fetchparish, 'parishname'));
+            $fetchparish = adminController::FetchAllParishes($request->parishcode)->original['Allparish'];
+            $parishNames = implode(', ', array_column($fetchparish, 'parishname'));
 
             $member = validator($request->all());
 
             $member = member::where('UserId', '=', $UserId)->first();
 
             if ($member) {
-                    $member->update([
-                        // 'UserId' => $request->UserId,
-                        'email' => $request->email,
-                        // 'password' => $request->password,
-                        'sname' => $request->sname,
-                        'fname' => $request->fname,
-                        'mname' => $request->mname,
-                        'Gender' => $request->Gender,
-                        'dob' => $request->dob,
-                        'mobile' => $request->mobile,
-                        'Altmobile' => $request->Altmobile,
-                        'Residence' => $request->Residence,
-                        'Country' => $request->Country,
-                        'State' => $request->State,
-                        'City' => $request->City,
-                        'Title' => $request->Title,
-                        'dot' => $request->dot,
-                        'MStatus' => $request->MStatus,
-                        'ministry' => $request->ministry,
-                        'Status' => $request->Status,
-                        'thumbnail' => $thumbnailPath,
-                        'parishcode' => $request->parishcode,
-                        'parishname'=> $parishNames,
-                    ]);
-                    return response()->json([
-                        'status' => 200,
-                        'message' => 'Member information updated Sucessfully !',
-                        'member'=> $member,
-                    ],200);
+                $member->update([
+                    // 'UserId' => $request->UserId,
+                    'email' => $request->email,
+                    // 'password' => $request->password,
+                    'sname' => $request->sname,
+                    'fname' => $request->fname,
+                    'mname' => $request->mname,
+                    'Gender' => $request->Gender,
+                    'dob' => $request->dob,
+                    'mobile' => $request->mobile,
+                    'Altmobile' => $request->Altmobile,
+                    'Residence' => $request->Residence,
+                    'Country' => $request->Country,
+                    'State' => $request->State,
+                    'City' => $request->City,
+                    'Title' => $request->Title,
+                    'dot' => $request->dot,
+                    'MStatus' => $request->MStatus,
+                    'ministry' => $request->ministry,
+                    'Status' => $request->Status,
+                    'thumbnail' => $thumbnailPath,
+                    'parishcode' => $request->parishcode,
+                    'parishname' => $parishNames,
+                ]);
+                return response()->json([
+                    'status' => 200,
+                    'message' => 'Member information updated Sucessfully !',
+                    'member' => $member,
+                ], 200);
 
             } else {
 
-                    return response()->json([
-                        'status' => 500,
-                        'message' => 'Update failed as user is not found',
-                    ], 200);
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Update failed as user is not found',
+                ], 200);
 
             }
         }
 
     }
 
-    public function deleteMember($UserId){
+    public function deleteMember($UserId)
+    {
 
         $member = member::where('UserId', '=', $UserId)->first();
         if ($member) {
@@ -436,7 +408,7 @@ class MemberController extends Controller
             $member->delete();
             return response()->json([
                 'status' => 200,
-                'message' => 'Member deleted  successfully'
+                'message' => 'Member deleted  successfully',
             ], 200);
         } else {
             return response()->json([
@@ -445,143 +417,134 @@ class MemberController extends Controller
             ], 404);
         }
 
-
     }
 
     public function AddNewTithe(Request $request)
     {
 
-     $validator = Validator::make($request->all(), [
-      //validator used in input data(Add New Parish)-copy and paste
-      'UserId'       => 'required|string|max:191',
-      'pymtdate' => 'required|string|max:191',
-      'Amount'   => 'required|string|max:191',
-      'pymtImg'    => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-      // we dont have to add picode bc we will generate it ourselve
-     ]);
+        $validator = Validator::make($request->all(), [
+            //validator used in input data(Add New Parish)-copy and paste
+            'UserId' => 'required|string|max:191',
+            'pymtdate' => 'required|string|max:191',
+            'Amount' => 'required|string|max:191',
+            'pymtImg' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            // we dont have to add picode bc we will generate it ourselve
+        ]);
 
-       if ($validator->fails()) {
-      return response()->json([
-       'status' => 422,
-       'error'  => $validator->messages(),
-      ], 422);
-
-     } else {
-
-         $member = member::where('UserId',$request->UserId)->get();
-
-      if ($request->hasFile('pymtImg')) {
-
-       $fileUploaded = $request->file('pymtImg');
-       $paymentImg  = $request->pymtdate.''. $request->UserId . '.' . $fileUploaded->getClientOriginalExtension();
-       $pymtImgPath = $fileUploaded->storeAs('pymtImgs', $paymentImg, 'public');
-      } else {
-       $pymtImgPath = ""; // Or provide a default image path
-      }
-        if(!$member){
+        if ($validator->fails()) {
             return response()->json([
-                'status' => 500,
-                'message' => 'Member does not exist',
-            ], 200);
-        }else{
+                'status' => 422,
+                'error' => $validator->messages(),
+            ], 422);
 
-        $Surname=$member[0]['sname'];
-        $FirstName=$member[0]['fname'];
-        $MiddleName=$member[0]['mname'];
-        $pariscode=$member[0]['parishcode'];
-        $parisname=$member[0]['parishname'];
-
-
-            $tithe = tithe::create([
-            'UserId'       => $request->UserId,
-            'FullName'     =>$Surname.' '.$FirstName.' '.$MiddleName,
-            'pymtdate' => $request->pymtdate,
-            'Amount'   => $request->Amount,
-            'parishcode'     =>$pariscode,
-            'parishname'        =>$parisname,
-            'pymtImg'   => $pymtImgPath,
-            ]);
-
-
-
-        }
-
-        if ($tithe) {
-
-        return response()->json([
-            'status'  => 200,
-            'message' => ' Tithe paid sucessfully',
-            'tithe'=> $tithe,
-        ], 200);
         } else {
 
-        return response()->json([
-            'status'  => 500,
-            'message' => 'Something went wrong '  . ' tithe not created',
-        ], 200);
-        }
+            $member = member::where('UserId', $request->UserId)->get();
 
-    }
+            if ($request->hasFile('pymtImg')) {
+
+                $fileUploaded = $request->file('pymtImg');
+                $paymentImg = $request->pymtdate . '' . $request->UserId . '.' . $fileUploaded->getClientOriginalExtension();
+                $pymtImgPath = $fileUploaded->storeAs('pymtImgs', $paymentImg, 'public');
+            } else {
+                $pymtImgPath = ""; // Or provide a default image path
+            }
+            if (!$member) {
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Member does not exist',
+                ], 200);
+            } else {
+
+                $Surname = $member[0]['sname'];
+                $FirstName = $member[0]['fname'];
+                $MiddleName = $member[0]['mname'];
+                $pariscode = $member[0]['parishcode'];
+                $parisname = $member[0]['parishname'];
+
+                $tithe = tithe::create([
+                    'UserId' => $request->UserId,
+                    'FullName' => $Surname . ' ' . $FirstName . ' ' . $MiddleName,
+                    'pymtdate' => $request->pymtdate,
+                    'Amount' => $request->Amount,
+                    'parishcode' => $pariscode,
+                    'parishname' => $parisname,
+                    'pymtImg' => $pymtImgPath,
+                ]);
+
+            }
+
+            if ($tithe) {
+
+                return response()->json([
+                    'status' => 200,
+                    'message' => ' Tithe paid sucessfully',
+                    'tithe' => $tithe,
+                ], 200);
+            } else {
+
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Something went wrong ' . ' tithe not created',
+                ], 200);
+            }
+
+        }
     }
 
     public function GetATithe($UserId)
     {
-     $tithe = tithe::where('UserId', '=', $UserId)->first();
-     if ($tithe) {
-      return response()->json([
-       'status'  => 200,
-       'message' => $UserId . ' Record fetched successfully',
-       'tithe '  => $tithe,
-      ], 200);
-     } else {
-      return response()->json([
-       'status'  => 404,
-       'message' => 'User not found',
-      ], 404);
-     }
+        $tithe = tithe::where('UserId', '=', $UserId)->first();
+        if ($tithe) {
+            return response()->json([
+                'status' => 200,
+                'message' => $UserId . ' Record fetched successfully',
+                'tithe ' => $tithe,
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 404,
+                'message' => 'User not found',
+            ], 404);
+        }
 
     }
 
     public function GetAllParishTithe($parishcode)
     {
-     $tithe = tithe::where('parishcode', '=', $parishcode)->get();
-     if ($tithe) {
-      return response()->json([
-       'status'  => 200,
-       'message' => $parishcode . ' Record fetched successfully',
-       'tithe '  => $tithe,
-      ], 200);
-     } else {
-      return response()->json([
-       'status'  => 404,
-       'message' => 'User not found',
-      ], 404);
-     }
+        $tithe = tithe::where('parishcode', '=', $parishcode)->get();
+        if ($tithe) {
+            return response()->json([
+                'status' => 200,
+                'message' => $parishcode . ' Record fetched successfully',
+                'tithe ' => $tithe,
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 404,
+                'message' => 'User not found',
+            ], 404);
+        }
 
     }
-
 
     public function UpdateTithe(Request $request, String $UserId)
     {
 
-
-
         $validator = Validator::make($request->all(), [
             //validator used in input data(tithe)-copy and paste
-      //'UserId'       => 'required|string|max:191',
-      'pymtdate' => 'required|string|max:191',
-      'Amount'   => 'required|string|max:191',
-      'pymtImg'  => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-      //'sname' => 'required|string|max:191',
-      //'fname' => 'required|string|max:191',
-      //'mname' => 'required|string|max:191',
-      //'parishcode'  =>'required|string|max:191',
-      //'parishname' =>'required|string|max:191',
+            //'UserId'       => 'required|string|max:191',
+            'pymtdate' => 'required|string|max:191',
+            'Amount' => 'required|string|max:191',
+            'pymtImg' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            //'sname' => 'required|string|max:191',
+            //'fname' => 'required|string|max:191',
+            //'mname' => 'required|string|max:191',
+            //'parishcode'  =>'required|string|max:191',
+            //'parishname' =>'required|string|max:191',
 
-      // we dont have to add userId bc we will generate it ourselve
+            // we dont have to add userId bc we will generate it ourselve
         ]);
-
-
 
         if ($validator->fails()) {
             return response()->json([
@@ -593,51 +556,51 @@ class MemberController extends Controller
 
             if ($request->hasFile('pymtImg')) {
                 $file = $request->file('pymtImg');
-                $pymtImg =  $request->pymtdate.''. $UserId .'.'. $file->getClientOriginalExtension();
+                $pymtImg = $request->pymtdate . '' . $UserId . '.' . $file->getClientOriginalExtension();
                 $pymtImgPath = $file->storeAs('pymtImgs', $pymtImg, 'public');
             } else {
                 $pymtImgPath = null; // Or provide a default image path
             }
 
-            $fetchparish=adminController::FetchAllParishes($request->parishcode)->original['Allparish'];
-            $parishNames =implode(', ', array_column($fetchparish, 'parishname'));
+            $fetchparish = adminController::FetchAllParishes($request->parishcode)->original['Allparish'];
+            $parishNames = implode(', ', array_column($fetchparish, 'parishname'));
 
             $tithe = validator($request->all());
 
             $tithe = tithe::where('UserId', '=', $UserId)->first();
 
             if ($tithe) {
-                    $tithe->update([
-                        //'UserId'       => $request->UserId,
-                        //'sname'  =>$request->sname,
-                        //'fname'  =>$request->fname,
-                        //'mname'  =>$request->mname,
-                        'pymtdate' => $request->pymtdate,
-                        'Amount'   => $request->Amount,
-                        //'parishcode'     =>$request->pariscode,
-                        //'parishname'        =>$request->parisname,
-                        'pymtImg'   => $pymtImgPath,
-                    ]);
-                    return response()->json([
-                        'status' => 200,
-                        'message' => 'Tithe information updated Sucessfully !',
-                        'tithe'=> $tithe,
-                    ],200);
+                $tithe->update([
+                    //'UserId'       => $request->UserId,
+                    //'sname'  =>$request->sname,
+                    //'fname'  =>$request->fname,
+                    //'mname'  =>$request->mname,
+                    'pymtdate' => $request->pymtdate,
+                    'Amount' => $request->Amount,
+                    //'parishcode'     =>$request->pariscode,
+                    //'parishname'        =>$request->parisname,
+                    'pymtImg' => $pymtImgPath,
+                ]);
+                return response()->json([
+                    'status' => 200,
+                    'message' => 'Tithe information updated Sucessfully !',
+                    'tithe' => $tithe,
+                ], 200);
 
             } else {
 
-                    return response()->json([
-                        'status' => 500,
-                        'message' => 'Update failed as user is not found',
-                    ], 200);
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Update failed as user is not found',
+                ], 200);
 
             }
         }
 
     }
 
-
-    public function DeleteTithe($UserId){
+    public function DeleteTithe($UserId)
+    {
 
         $tithe = tithe::where('UserId', '=', $UserId)->first();
         if ($tithe) {
@@ -645,7 +608,7 @@ class MemberController extends Controller
             $tithe->delete();
             return response()->json([
                 'status' => 200,
-                'message' => 'tithe deleted  successfully'
+                'message' => 'tithe deleted  successfully',
             ], 200);
         } else {
             return response()->json([
@@ -654,136 +617,132 @@ class MemberController extends Controller
             ], 404);
         }
 
-
     }
-
 
     public function AddNewJuvelineHarvest(Request $request)
     {
 
-     $validator = Validator::make($request->all(), [
-      //validator used in input data(Add New Parish)-copy and paste
-      'UserId'       => 'required|string|max:191',
-      'pymtdate' => 'required|string|max:191',
-      'Amount'   => 'required|string|max:191',
-      'pymtImg'    => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-      // we dont have to add picode bc we will generate it ourselve
-     ]);
+        $validator = Validator::make($request->all(), [
+            //validator used in input data(Add New Parish)-copy and paste
+            'UserId' => 'required|string|max:191',
+            'pymtdate' => 'required|string|max:191',
+            'Amount' => 'required|string|max:191',
+            'pymtImg' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            // we dont have to add picode bc we will generate it ourselve
+        ]);
 
-       if ($validator->fails()) {
-      return response()->json([
-       'status' => 422,
-       'error'  => $validator->messages(),
-      ], 422);
-
-     } else {
-
-         $member = member::where('UserId',$request->UserId)->get();
-
-      if ($request->hasFile('pymtImg')) {
-
-       $fileUploaded = $request->file('pymtImg');
-       $jhpaymentImg  = $request->pymtdate.''. $request->UserId . '.' . $fileUploaded->getClientOriginalExtension();
-       $pymtImgPath = $fileUploaded->storeAs('jharvestpymtImgs', $jhpaymentImg, 'public');
-      } else {
-       $pymtImgPath = ""; // Or provide a default image path
-      }
-        if(!$member){
+        if ($validator->fails()) {
             return response()->json([
-                'status' => 500,
-                'message' => 'Member does not exist',
-            ], 200);
-        }else{
+                'status' => 422,
+                'error' => $validator->messages(),
+            ], 422);
 
-        $Surname=$member[0]['sname'];
-        $FirstName=$member[0]['fname'];
-        $MiddleName=$member[0]['mname'];
-        $pariscode=$member[0]['parishcode'];
-        $parisname=$member[0]['parishname'];
-
-
-            $juvelineharvest = juvelineharvest::create([
-            'UserId'       => $request->UserId,
-            'FullName'     =>$Surname.' '.$FirstName.' '.$MiddleName,
-            'pymtdate' => $request->pymtdate,
-            'Amount'   => $request->Amount,
-            'parishcode'     =>$pariscode,
-            'parishname'        =>$parisname,
-            'pymtImg'   => $pymtImgPath,
-            ]);
-        }
-
-        if ($juvelineharvest) {
-
-        return response()->json([
-            'status'  => 200,
-            'message' => ' juvelineharvest paid sucessfully',
-            'juvelineharvest'=> $juvelineharvest,
-        ], 200);
         } else {
 
-        return response()->json([
-            'status'  => 500,
-            'message' => 'Something went wrong '  . ' juvelineharvest not created',
-        ], 200);
-        }
+            $member = member::where('UserId', $request->UserId)->get();
+
+            if ($request->hasFile('pymtImg')) {
+
+                $fileUploaded = $request->file('pymtImg');
+                $jhpaymentImg = $request->pymtdate . '' . $request->UserId . '.' . $fileUploaded->getClientOriginalExtension();
+                $pymtImgPath = $fileUploaded->storeAs('jharvestpymtImgs', $jhpaymentImg, 'public');
+            } else {
+                $pymtImgPath = ""; // Or provide a default image path
+            }
+            if (!$member) {
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Member does not exist',
+                ], 200);
+            } else {
+
+                $Surname = $member[0]['sname'];
+                $FirstName = $member[0]['fname'];
+                $MiddleName = $member[0]['mname'];
+                $pariscode = $member[0]['parishcode'];
+                $parisname = $member[0]['parishname'];
+
+                $juvelineharvest = juvelineharvest::create([
+                    'UserId' => $request->UserId,
+                    'FullName' => $Surname . ' ' . $FirstName . ' ' . $MiddleName,
+                    'pymtdate' => $request->pymtdate,
+                    'Amount' => $request->Amount,
+                    'parishcode' => $pariscode,
+                    'parishname' => $parisname,
+                    'pymtImg' => $pymtImgPath,
+                ]);
+            }
+
+            if ($juvelineharvest) {
+
+                return response()->json([
+                    'status' => 200,
+                    'message' => ' juvelineharvest paid sucessfully',
+                    'juvelineharvest' => $juvelineharvest,
+                ], 200);
+            } else {
+
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Something went wrong ' . ' juvelineharvest not created',
+                ], 200);
+            }
 
         }
     }
 
     public function GetAllParishJuvelineDue($parishcode)
     {
-     $juvelineharvest = juvelineharvest::where('parishcode', '=', $parishcode)->get();
-     if ($juvelineharvest) {
-      return response()->json([
-       'status'  => 200,
-       'message' => $parishcode . ' Record fetched successfully',
-       'juvelineharvest '  => $juvelineharvest,
-      ], 200);
-     } else {
-      return response()->json([
-       'status'  => 404,
-       'message' => 'User not found',
-      ], 404);
-     }
+        $juvelineharvest = juvelineharvest::where('parishcode', '=', $parishcode)->get();
+        if ($juvelineharvest) {
+            return response()->json([
+                'status' => 200,
+                'message' => $parishcode . ' Record fetched successfully',
+                'juvelineharvest ' => $juvelineharvest,
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 404,
+                'message' => 'User not found',
+            ], 404);
+        }
 
     }
 
     public function GetAJuvelineDue($UserId)
     {
-     $juvelineharvest = juvelineharvest::where('UserId', '=', $UserId)->first();
-     if ($juvelineharvest) {
-      return response()->json([
-       'status'  => 200,
-       'message' => $UserId . ' Record fetched successfully',
-       'juvelineharvest '  => $juvelineharvest,
-      ], 200);
-     } else {
-      return response()->json([
-       'status'  => 404,
-       'message' => 'User not found',
-      ], 404);
-     }
+        $juvelineharvest = juvelineharvest::where('UserId', '=', $UserId)->first();
+        if ($juvelineharvest) {
+            return response()->json([
+                'status' => 200,
+                'message' => $UserId . ' Record fetched successfully',
+                'juvelineharvest ' => $juvelineharvest,
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 404,
+                'message' => 'User not found',
+            ], 404);
+        }
 
     }
-
 
     public function UpdateJuvelineDue(Request $request, String $UserId)
     {
 
         $validator = Validator::make($request->all(), [
             //validator used in input data(tithe)-copy and paste
-      //'UserId'       => 'required|string|max:191',
-      'pymtdate' => 'required|string|max:191',
-      'Amount'   => 'required|string|max:191',
-      'pymtImg'  => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-      //'sname' => 'required|string|max:191',
-      //'fname' => 'required|string|max:191',
-      //'mname' => 'required|string|max:191',
-      //'parishcode'  =>'required|string|max:191',
-      //'parishname' =>'required|string|max:191',
+            //'UserId'       => 'required|string|max:191',
+            'pymtdate' => 'required|string|max:191',
+            'Amount' => 'required|string|max:191',
+            'pymtImg' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            //'sname' => 'required|string|max:191',
+            //'fname' => 'required|string|max:191',
+            //'mname' => 'required|string|max:191',
+            //'parishcode'  =>'required|string|max:191',
+            //'parishname' =>'required|string|max:191',
 
-      // we dont have to add userId bc we will generate it ourselve
+            // we dont have to add userId bc we will generate it ourselve
         ]);
 
         if ($validator->fails()) {
@@ -796,43 +755,43 @@ class MemberController extends Controller
 
             if ($request->hasFile('pymtImg')) {
                 $file = $request->file('pymtImg');
-                $jhpaymentImg =  $request->pymtdate.''. $UserId .'.'. $file->getClientOriginalExtension();
+                $jhpaymentImg = $request->pymtdate . '' . $UserId . '.' . $file->getClientOriginalExtension();
                 $jhpaymentImgPath = $file->storeAs('jhpaymentImgs', $jhpaymentImg, 'public');
             } else {
                 $jhpaymentImgPath = null; // Or provide a default image path
             }
 
-            $fetchparish=adminController::FetchAllParishes($request->parishcode)->original['Allparish'];
-            $parishNames =implode(', ', array_column($fetchparish, 'parishname'));
+            $fetchparish = adminController::FetchAllParishes($request->parishcode)->original['Allparish'];
+            $parishNames = implode(', ', array_column($fetchparish, 'parishname'));
 
             $juvelineharvest = validator($request->all());
 
             $juvelineharvest = juvelineharvest::where('UserId', '=', $UserId)->first();
 
             if ($juvelineharvest) {
-                    $juvelineharvest->update([
-                        //'UserId'       => $request->UserId,
-                        //'sname'  =>$request->sname,
-                        //'fname'  =>$request->fname,
-                        //'mname'  =>$request->mname,
-                        'pymtdate' => $request->pymtdate,
-                        'Amount'   => $request->Amount,
-                        //'parishcode'     =>$request->pariscode,
-                        //'parishname'        =>$request->parisname,
-                        'pymtImg'   => $jhpaymentImgPath,
-                    ]);
-                    return response()->json([
-                        'status' => 200,
-                        'message' => 'juvelineharvest information updated Sucessfully !',
-                        'juvelineharvest'=> $juvelineharvest,
-                    ],200);
+                $juvelineharvest->update([
+                    //'UserId'       => $request->UserId,
+                    //'sname'  =>$request->sname,
+                    //'fname'  =>$request->fname,
+                    //'mname'  =>$request->mname,
+                    'pymtdate' => $request->pymtdate,
+                    'Amount' => $request->Amount,
+                    //'parishcode'     =>$request->pariscode,
+                    //'parishname'        =>$request->parisname,
+                    'pymtImg' => $jhpaymentImgPath,
+                ]);
+                return response()->json([
+                    'status' => 200,
+                    'message' => 'juvelineharvest information updated Sucessfully !',
+                    'juvelineharvest' => $juvelineharvest,
+                ], 200);
 
             } else {
 
-                    return response()->json([
-                        'status' => 500,
-                        'message' => 'Update failed as user is not found',
-                    ], 200);
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Update failed as user is not found',
+                ], 200);
 
             }
         }
@@ -848,7 +807,7 @@ class MemberController extends Controller
             $juvelineharvest->delete();
             return response()->json([
                 'status' => 200,
-                'message' => 'juvelineharvest deleted  successfully'
+                'message' => 'juvelineharvest deleted  successfully',
             ], 200);
         } else {
             return response()->json([
@@ -857,9 +816,7 @@ class MemberController extends Controller
             ], 404);
         }
 
-
     }
-
 
 //     public function searchAllMembers(Request $request)
 // {
@@ -914,9 +871,10 @@ class MemberController extends Controller
     //     ]);
     // }
 
-
     public function addCommitteePayment(Request $request)
     {
+
+
         $validator = Validator::make($request->all(), [
             'committeRefno' => 'required|string|max:191',
             'memberId' => 'required|string|max:191',
@@ -932,78 +890,171 @@ class MemberController extends Controller
                 'error' => $validator->messages(),
             ], 422);
         } else {
-            $fullName=" ";
-            $parishcode="";
-            $parishname="";
-            $roleName=" ";
+            $fullName = " ";
+            $parishcode = "";
+            $parishname = "";
+            $roleName = " ";
             //get committe Name
-            $committee = committee::where('committeRefno',$request->committeRefno)->first();
-            $committeeName=$committee['committeName'];
+            $committee = committee::where('committeRefno', $request->committeRefno)->first();
+            $committeeName = $committee['committeName'];
 
-            $getcommitteeMember = CommitteMember::where('memberId',$request->memberId)
-            ->where('committeRefno', $request->committeRefno)
-            ->first();
+            $getcommitteeMember = CommitteMember::where('memberId', $request->memberId)
+                ->where('committeRefno', $request->committeRefno)
+                ->first();
 
-            if($getcommitteeMember) {
-             $fullName=$getcommitteeMember['memberName'];//paidby
-             $parishcode=$committee['parishcode'];
-             $parishname=$committee['parishname'];
-             $roleName=$getcommitteeMember['roleName'];
+            if ($getcommitteeMember) {
+                $fullName = $getcommitteeMember['memberName']; //paidby
+                $parishcode = $committee['parishcode'];
+                $parishname = $committee['parishname'];
+                $roleName = $getcommitteeMember['roleName'];
 
+            } else {
 
-            }else{
-
-                //Non committee member details
+                //Non committee member details-all other member of the parish contribution
                 $getMember = MemberController::GetMember($request->memberId); //GetMember function is from Get member controller
 
-                if($getMember) {
-                //decode details
-                $decodeMemberName = adminController::decodeMemberName($getMember);
+                if ($getMember) {
+                    //decode details
+                    $decodeMemberName = adminController::decodeMemberName($getMember);
 
-                $fullName=$decodeMemberName['sname'] .' '.$decodeMemberName['fname'] .' '.$decodeMemberName['mname']; //paidby
-                $parishcode=$decodeMemberName['parishcode'];
-                $parishname=$decodeMemberName['parishname'];
-                $roleName="Non-committe Member";
-
+                    $fullName = $decodeMemberName['sname'] . ' ' . $decodeMemberName['fname'] . ' ' . $decodeMemberName['mname']; //paidby
+                    $parishcode = $decodeMemberName['parishcode'];
+                    $parishname = $decodeMemberName['parishname'];
+                    $roleName = "Non-committe Member";
                 }
-
-
             }
+            $createCommitteePayment = committememberpayment::create([
+                'committeRefno' => $request->committeRefno,
+                'committename' => $committeeName,
+                'UserId' => $request->memberId,
+                'paidfor' => '',
+                'paidby' => $fullName,
+                'parishcode' => $parishcode,
+                'parishname' => $parishname,
+                'amount' => $request->amount,
+                'receipt' => '',
+                'roleName' => $roleName,
+                'paymentdate' => $request->paymentdate,
+            ]);
 
-
-
-                 $createCommitteePayment = committeepayment::create([
-                    'committeRefno'=>$request->committeRefno,
-                    'committename'=> $committeeName,
-                    'UserId'=>$request->memberId,
-                    'paidfor'=>'',
-                    'paidby'=>$fullName,
-                    'parishcode'=>$parishcode,
-                    'parishname'=>$parishname,
-                    'amount'=>$request->amount,
-                    'receipt'=>'',
-                    'roleName'=>$roleName,
-                    'paymentdate'=>$request->paymentdate,
-                ]);
-
-
-           if ($createCommitteePayment) {
-                    return response()->json([
-                        'status' => 200,
-                        'message' => 'Payment Uploaded successfully',
-                    ], 200);
-                } else {
-                    return response()->json([
-                        'status' => 500,
-                        'message' => 'Payment not uploaded successfully',
-                    ], 500);
-                }
+            if ($createCommitteePayment) {
+                return response()->json([
+                    'status' => 200,
+                    'message' => 'Payment Uploaded successfully',
+                ], 200);
+            } else {
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Payment not uploaded successfully',
+                ], 500);
+            }
         }
     }
 
+    public function GetACommitteeMemberPayment($userId)
+    {
 
+        $payments = committememberpayment::where('UserId', $userId)->get();
+
+        if ($payments) {
+            return response()->json([
+                'status' => 200,
+                'message' => ' Record fetched successfully',
+                'data' => $payments,
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 404,
+                'message' => 'User not found',
+            ], 404);
+        }
+
+    }
+
+    public function GetMemberPymtforACommitee($UserId, $committeRefno)
+    {
+
+        $payments = committememberpayment::where('UserId', $UserId)->where('committeRefno', $committeRefno)->get();
+
+        if (($payments)) {
+            return response()->json([
+                'status' => 200,
+                'message' => ' Record fetched successfully',
+                'data' => $payments,
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 404,
+                'message' => 'User not found',
+            ], 404);
+
+        }
+
+    }
+    public function GetACommitteeNamePayment($committeRefno)
+    {
+        $allData = committememberpayment::where('committeRefno', '=', 'NIG0120240422182901')->get();
+        //$allData = committeepayment::where('committeRefno', '=', $committeRefno)->get();
+        return $allData;
+        if ($allData) {
+            return response()->json([
+                'status' => 200,
+                'message' => ' Record fetched successfully',
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 404,
+                'message' => 'User not found',
+            ], 404);
+        }
+
+    }
+
+    public function changeCommitteePayment(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            //validator used in input data-copy and paste
+            'oldcommitteRefno' => 'required|string|max:191',
+            'oldmemberId' => 'required|string|max:191',
+            'committeRefno' => 'required|string|max:191',
+            'memberId' => 'required|string|max:191',
+
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'error' => $validator->messages(),
+            ], 422);
+        }
+
+        $getNewMemberDetails = MemberController::GetMember($request->new_member_id); //GetMember function is from Get member controller
+
+        $decodeMemberName = adminController::decodeMemberName($getNewMemberDetails); // decodeMemberName function is down down
+
+        $fullName = $decodeMemberName['sname'] . ' ' . $decodeMemberName['fname'] . ' ' . $decodeMemberName['mname'];
+        $title = $decodeMemberName['Title'];
+        $gender = $decodeMemberName['Gender'];
+        $committename = $decodeMemberName['committename'];
+
+        $getOldcommitteeMemberPayment = committememberpayment::where('UserId', $request->memberId)->where('committeRefno', $request->committeRefno)->first();
+
+        if ($getOldcommitteeMemberPayment && $getNewMemberDetails) {
+            // Update the old committee member details with the new member details
+            $getOldcommitteeMemberPayment->update([
+                'paidfor' => $fullName,
+                'UserId' => $request->new_member_id,
+                "committename" => $committename,
+                // Add other fields that you want to update
+            ]);
+        }
+        if ($getOldcommitteeMemberPayment) {
+            return response()->json([
+                'status' => 200,
+                'message' => 'Message Change will be change based on Parochail Chairman Approval',
+                'data' => $getOldcommitteeMemberPayment,
+            ], 200);
+        }
+    }
 
 }
-
-
-
