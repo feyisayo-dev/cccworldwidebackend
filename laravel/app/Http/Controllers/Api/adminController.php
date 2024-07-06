@@ -34,7 +34,7 @@ class adminController extends Controller
             return response()->json([
                 'status' => 200,
                 'message' => 'Record fetched successfully',
-                'titles ' => $alltitle,
+                'titles' => $alltitle,
             ], 200);
         } else {
             return response()->json([
@@ -582,6 +582,9 @@ class adminController extends Controller
 
     public function updateTitle(Request $request, Int $id)
     {
+        error_log('get here');
+
+
         $validator = Validator::make($request->all(), [
             'gender' => 'required|string|max:191',
             'title' => 'required|string|max:191',

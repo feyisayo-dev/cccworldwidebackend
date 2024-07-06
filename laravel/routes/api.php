@@ -23,14 +23,14 @@ use App\Http\Controllers\Api\childrenController;
 
 
 
-Route::post('/login',[MemberController::class,'login']);
-Route::post('/logout',[MemberController::class,'logout']);
+Route::post('/login', [MemberController::class, 'login']);
+Route::post('/logout', [MemberController::class, 'logout']);
 
 
 
 //member API
 // Route::get('/Allmember',[MemberController::class,'fetchAllMembers']);
-Route::post('/Addmember',[MemberController::class,'Addmember']);
+Route::post('/Addmember', [MemberController::class, 'Addmember']);
 // Route::get('/member/{userid}',[MemberController::class,'GetMember']);
 // Route::put('/member/{userid}/update',[MemberController::class,'updateMember']);
 // Route::delete('/member/{userid}/delete',[MemberController::class,'deleteMember']);
@@ -67,165 +67,172 @@ Route::post('/Addmember',[MemberController::class,'Addmember']);
 //protected route
 //Route::group(['middleware' => ['auth:sanctum']],function(){
 
-    Route::get('/member/{userid}',[MemberController::class,'GetMember']);
-    Route::post('/member/{userid}/update',[MemberController::class,'updateMember']);
-    Route::delete('/member/{userid}/delete',[MemberController::class,'deleteMember']);
-    Route::get('Allmember',[MemberController::class,'FetchAllMembers']);
-   // });
+Route::get('/member/{userid}', [MemberController::class, 'GetMember']);
+Route::post('/member/{userid}/update', [MemberController::class, 'updateMember']);
+Route::delete('/member/{userid}/delete', [MemberController::class, 'deleteMember']);
+Route::get('Allmember', [MemberController::class, 'FetchAllMembers']);
+// });
 
 
-    Route::post('Addmember',[MemberController::class,'Addmember']);
+Route::post('Addmember', [MemberController::class, 'Addmember']);
 
-    // Tithe
-    Route::post('AddNewTithe',[MemberController::class,'AddNewTithe']);
-    Route::get('Tithe/{userid}',[MemberController::class,'GetATithe']);
-    Route::get('MParishTithe/{parishcode}',[MemberController::class,'GetAllParishTithe']);
-    Route::post('Tithe/{userid}/update',[MemberController::class,'UpdateTithe']);
-    Route::delete('MDelete/{userid}/delete',[MemberController::class,'DeleteTithe']);
+// Tithe
+Route::post('AddNewTithe', [MemberController::class, 'AddNewTithe']);
+Route::get('Tithe/{userid}', [MemberController::class, 'GetATithe']);
+Route::get('MParishTithe/{parishcode}', [MemberController::class, 'GetAllParishTithe']);
+Route::post('Tithe/{userid}/update', [MemberController::class, 'UpdateTithe']);
+Route::delete('MDelete/{userid}/delete', [MemberController::class, 'DeleteTithe']);
 
 //Juveline Harvest API
-Route::post('AddNewJHarvest',[MemberController::class,'AddNewJuvelineHarvest']);
-Route::get('MJuveline/{parishcode}',[MemberController::class,'GetAllParishJuvelineDue']);
-Route::get('Juveline/{userid}',[MemberController::class,'GetAJuvelineDue']);
-Route::post('Juveline/{userid}/update',[MemberController::class,'UpdateJuvelineDue']);
-Route::delete('MJuvelineDelete/{userid}/delete',[MemberController::class,'DeleteJuvelineDue']);
+Route::post('AddNewJHarvest', [MemberController::class, 'AddNewJuvelineHarvest']);
+Route::get('MJuveline/{parishcode}', [MemberController::class, 'GetAllParishJuvelineDue']);
+Route::get('Juveline/{userid}', [MemberController::class, 'GetAJuvelineDue']);
+Route::post('Juveline/{userid}/update', [MemberController::class, 'UpdateJuvelineDue']);
+Route::delete('MJuvelineDelete/{userid}/delete', [MemberController::class, 'DeleteJuvelineDue']);
 
 //Adult Harvest API
-Route::post('AddNewAdultHarvest',[MemberController::class,'AddNewAdultHarvest']);
-Route::get('MAdultHarvest/{parishcode}',[MemberController::class,'GetAllParishAdultDue']);
-Route::get('Adult/{userid}',[MemberController::class,'GetAAdultDue']);
-Route::post('Adult/{userid}/update',[MemberController::class,'UpdateAdultDue']);
-Route::delete('MAdultDelete/{userid}/delete',[MemberController::class,'DeleteAdultDue']);
+Route::post('AddNewAdultHarvest', [MemberController::class, 'AddNewAdultHarvest']);
+Route::get('MAdultHarvest/{parishcode}', [MemberController::class, 'GetAllParishAdultDue']);
+Route::get('Adult/{userid}', [MemberController::class, 'GetAAdultDue']);
+Route::post('Adult/{userid}/update', [MemberController::class, 'UpdateAdultDue']);
+Route::delete('MAdultDelete/{userid}/delete', [MemberController::class, 'DeleteAdultDue']);
 
 // Route::put('member/{userid}/update',[MemberController::class,'updateMember']);
 // Route::delete('member/{userid}/delete',[MemberController::class,'deleteMember']);
 
 //children API
-    Route::get('Allchildren',[childrenController::class,'FetchAllChildren']);
-    Route::post('Addchildren',[childrenController::class,'AddChild']);
-    Route::delete('children/{parentid}/{id}/delete',[childrenController::class,'deleteChildren']);
-    Route::put('children/{id}/update',[childrenController::class,'updateChild']);
-    Route::get('children/{parentid}/viewallchildren',[childrenController::class,'viewchildren']);
-    Route::get('children/{parentid}/viewchild',[childrenController::class,'viewchild']);
+Route::get('Allchildren', [childrenController::class, 'FetchAllChildren']);
+Route::post('Addchildren', [childrenController::class, 'AddChild']);
+Route::delete('children/{parentid}/{id}/delete', [childrenController::class, 'deleteChildren']);
+Route::put('children/{id}/update', [childrenController::class, 'updateChild']);
+Route::get('children/{parentid}/viewallchildren', [childrenController::class, 'viewchildren']);
+Route::get('children/{parentid}/viewchild', [childrenController::class, 'viewchild']);
 
 //admin API
-// Route::get('Alltitle',[adminController::class,'FetchAlltitle']);
 
-    Route::get('Alltitle',[adminController::class,'FetchAlltitle']);
-    Route::post('Addtitle',[adminController::class,'Addnewtitle']);
-    Route::get('getTitleByGender/{gender}',[adminController::class,'getTitleByGender']);
-    Route::delete('title/{id}/delete',[adminController::class,'deleteTitle']);
-    Route::put('title/{id}/update',[adminController::class,'updateTitle']);
+// Route::get('Alltitle', [adminController::class, 'FetchAlltitle']);
+Route::post('Addtitle', [adminController::class, 'Addnewtitle']);
+Route::delete('title/{id}/delete', [adminController::class, 'deleteTitle']);
+Route::put('title/{id}/update', [adminController::class, 'updateTitle']);
 
+// add title
 
-
-
-    //National
-    Route::get('Allnational',[adminController::class,'FetchAllNatinal']);
-    Route::get('getAnational/{code}/get',[adminController::class,'getNational']);
-    Route::post('Addnational',[adminController::class,'AddNewNatinal']);
-    Route::put('updatenational/{code}/update',[adminController::class,'UpdateNational']);
-    Route::delete('deletenational/{code}/delete',[adminController::class,'deleteNational']);
-
-    //State
-    Route::get('Allstate',[adminController::class,'FetchAllState']);
-    // Route::post('Addstate',[adminController::class,'AddNewState']);
-    Route::get('State/{scode}',[adminController::class,'GetAState']);
-    Route::put('updatestate/{scode}/update',[adminController::class,'UpdateState']);
-    Route::delete('deletestate/{scode}/delete',[adminController::class,'deleteState']);
-
-    //area
-    Route::get('Allarea',[adminController::class,'FetchAllarea']);
-    Route::get('Area/{acode}',[adminController::class,'GetAnArea']);
-    Route::put('updatearea/{acode}/update',[adminController::class,'UpdateArea']);
-    Route::delete('deletearea/{acode}/delete',[adminController::class,'deleteArea']);
-
-    //province
-    Route::get('Allprovince',[adminController::class,'FetchAllProvince']);
-    Route::get('Province/{pcode}',[adminController::class,'GetAProvince']);
-    Route::put('Update/{pcode}/update',[adminController::class,'UpdateProvince']);
-    Route::delete('Deleteprovince/{pcode}/delete',[adminController::class,'DeleteProvince']);
-
-    //circuit
-    Route::get('Allcircuit',[adminController::class,'FetchAllCircuit']);
-    Route::get('Circuit/{cicode}',[adminController::class,'GetACircuit']);
-    Route::put('UpdateCicuit/{cicode}/update',[adminController::class,'UpdateCircuit']);
-    Route::delete('DeleteCircuit/{cicode}/delete',[adminController::class,'DeleteCircuit']);
-
-
-    //District
-    // Route::post('AddDistrict',[adminController::class,'AddNewDistrict']);
-    Route::get('AllDistrict',[adminController::class,'FetchAllDistrict']);
-    Route::get('District/{dcode}',[adminController::class,'GetADistrict']);
-    Route::put('UpdateDistrict/{dcode}/update',[adminController::class,'UpdateDistrict']);
-    Route::delete('DeleteDistrict/{dcode}/delete',[adminController::class,'DeleteDistrict']);
-
-    //Parish
-    Route::post('AddParish',[adminController::class,'AddNewParish']);
-    Route::get('AllParish',[adminController::class,'FetchAllParish']);
-    Route::get('Parish/{picode}',[adminController::class,'GetAParish']);
-    Route::put('UpdateParish/{picode}/update',[adminController::class,'UpdateParish']);
-    Route::delete('DeleteParish/{picode}/delete',[adminController::class,'DeleteParish']);
-    Route::get('getParishByState/{state}',[adminController::class,'getParishByStatename']);
+// Route::get('getAtitle/{Id}', [adminController::class, 'GetAtitle']);
+Route::get('getAlltitle', [adminController::class, 'FetchAlltitle']);
+// Route::post('updatetitle/{Id}/update', [adminController::class, 'updatetitle']);
+// Route::get('getTitleByGender/{gender}', [adminController::class, 'getTitleByGender']);
+// Route::delete('deletetitle/{Id}/delete', [adminController::class, 'Deletetitle']);
 
 
 
-    //get all parishes or one parish
-    Route::get('getAllParishes',[adminController::class,'fetchAllParishes']);
-    Route::get('getAParish/{parishcode}',[adminController::class,'FetchAllParishes']);
 
-    // EVENT END POINT
-    Route::post('AddEvent',[adminController::class,'AddNewEvent']);
-    Route::get('AllEvent',[adminController::class,'FetchAllEvent']);
-    Route::get('Event/{EventId}',[adminController::class,'GetAnEvent']);
-    Route::post('updateEvent/{EventId}/update',[adminController::class,'updateEvent']);
-    Route::delete('DeleteEvent/{EventId}/delete',[adminController::class,'DeleteEvent']);
+//National
+Route::get('Allnational', [adminController::class, 'FetchAllNatinal']);
+Route::get('getAnational/{code}/get', [adminController::class, 'getNational']);
+Route::post('Addnational', [adminController::class, 'AddNewNatinal']);
+Route::put('updatenational/{code}/update', [adminController::class, 'UpdateNational']);
+Route::delete('deletenational/{code}/delete', [adminController::class, 'deleteNational']);
 
-    // VINEYARD END POINT
-    Route::post('AddVineyard',[adminController::class,'AddNewVineyard']);
-    Route::get('AllVineyard',[adminController::class,'FetchAllVineyard']);
-    //Route::get('Vineyard/{Id}',[adminController::class,'GetAnEvent']);
-    Route::post('updateVineyard/{Id}/update',[adminController::class,'updateVineyard']);
-    Route::delete('DeleteVineyard/{Id}/delete',[adminController::class,'DeleteVineyard']);
+//State
+Route::get('Allstate', [adminController::class, 'FetchAllState']);
+// Route::post('Addstate',[adminController::class,'AddNewState']);
+Route::get('State/{scode}', [adminController::class, 'GetAState']);
+Route::put('updatestate/{scode}/update', [adminController::class, 'UpdateState']);
+Route::delete('deletestate/{scode}/delete', [adminController::class, 'deleteState']);
 
-     // MINISTRY END POINT
-     Route::post('AddMinistry',[adminController::class,'AddNewMinistry']);
-     Route::get('AllMinistry',[adminController::class,'FetchAllMinistry']);
-     //Route::get('Vineyard/{Id}',[adminController::class,'GetAnEvent']);
-     Route::post('updateMinistry/{Id}/update',[adminController::class,'updateMinistry']);
-     Route::delete('DeleteMinistry/{Id}/delete',[adminController::class,'DeleteMinistry']);
+//area
+Route::get('Allarea', [adminController::class, 'FetchAllarea']);
+Route::get('Area/{acode}', [adminController::class, 'GetAnArea']);
+Route::put('updatearea/{acode}/update', [adminController::class, 'UpdateArea']);
+Route::delete('deletearea/{acode}/delete', [adminController::class, 'deleteArea']);
 
-     // VISITOR END POINT
-     Route::post('AddVisitor',[adminController::class,'AddNewVisitor']);
-     Route::get('AllVisitor',[adminController::class,'FetchAllVisitor']);
-     Route::get('Visitor/{Id}',[adminController::class,'GetAVisitor']);
-    // Route::delete('DeleteMinistry/{Id}/delete',[adminController::class,'DeleteMinistry']);
+//province
+Route::get('Allprovince', [adminController::class, 'FetchAllProvince']);
+Route::get('Province/{pcode}', [adminController::class, 'GetAProvince']);
+Route::put('Update/{pcode}/update', [adminController::class, 'UpdateProvince']);
+Route::delete('Deleteprovince/{pcode}/delete', [adminController::class, 'DeleteProvince']);
 
-     //get All country
-     Route::get('GetCountries',[adminController::class,'fetchCountries']);
+//circuit
+Route::get('Allcircuit', [adminController::class, 'FetchAllCircuit']);
+Route::get('Circuit/{cicode}', [adminController::class, 'GetACircuit']);
+Route::put('UpdateCicuit/{cicode}/update', [adminController::class, 'UpdateCircuit']);
+Route::delete('DeleteCircuit/{cicode}/delete', [adminController::class, 'DeleteCircuit']);
 
 
-     //Committee
+//District
+// Route::post('AddDistrict',[adminController::class,'AddNewDistrict']);
+Route::get('AllDistrict', [adminController::class, 'FetchAllDistrict']);
+Route::get('District/{dcode}', [adminController::class, 'GetADistrict']);
+Route::put('UpdateDistrict/{dcode}/update', [adminController::class, 'UpdateDistrict']);
+Route::delete('DeleteDistrict/{dcode}/delete', [adminController::class, 'DeleteDistrict']);
+
+//Parish
+Route::post('AddParish', [adminController::class, 'AddNewParish']);
+Route::get('AllParish', [adminController::class, 'FetchAllParish']);
+Route::get('Parish/{picode}', [adminController::class, 'GetAParish']);
+Route::put('UpdateParish/{picode}/update', [adminController::class, 'UpdateParish']);
+Route::delete('DeleteParish/{picode}/delete', [adminController::class, 'DeleteParish']);
+Route::get('getParishByState/{state}', [adminController::class, 'getParishByStatename']);
+
+
+
+//get all parishes or one parish
+Route::get('getAllParishes', [adminController::class, 'fetchAllParishes']);
+Route::get('getAParish/{parishcode}', [adminController::class, 'FetchAllParishes']);
+
+// EVENT END POINT
+Route::post('AddEvent', [adminController::class, 'AddNewEvent']);
+Route::get('AllEvent', [adminController::class, 'FetchAllEvent']);
+Route::get('Event/{EventId}', [adminController::class, 'GetAnEvent']);
+Route::post('updateEvent/{EventId}/update', [adminController::class, 'updateEvent']);
+Route::delete('DeleteEvent/{EventId}/delete', [adminController::class, 'DeleteEvent']);
+
+// VINEYARD END POINT
+Route::post('AddVineyard', [adminController::class, 'AddNewVineyard']);
+Route::get('AllVineyard', [adminController::class, 'FetchAllVineyard']);
+//Route::get('Vineyard/{Id}',[adminController::class,'GetAnEvent']);
+Route::post('updateVineyard/{Id}/update', [adminController::class, 'updateVineyard']);
+Route::delete('DeleteVineyard/{Id}/delete', [adminController::class, 'DeleteVineyard']);
+
+// MINISTRY END POINT
+Route::post('AddMinistry', [adminController::class, 'AddNewMinistry']);
+Route::get('AllMinistry', [adminController::class, 'FetchAllMinistry']);
+//Route::get('Vineyard/{Id}',[adminController::class,'GetAnEvent']);
+Route::post('updateMinistry/{Id}/update', [adminController::class, 'updateMinistry']);
+Route::delete('DeleteMinistry/{Id}/delete', [adminController::class, 'DeleteMinistry']);
+
+// VISITOR END POINT
+Route::post('AddVisitor', [adminController::class, 'AddNewVisitor']);
+Route::get('AllVisitor', [adminController::class, 'FetchAllVisitor']);
+Route::get('Visitor/{Id}', [adminController::class, 'GetAVisitor']);
+// Route::delete('DeleteMinistry/{Id}/delete',[adminController::class,'DeleteMinistry']);
+
+//get All country
+Route::get('GetCountries', [adminController::class, 'fetchCountries']);
+
+
+//Committee
 //add committee to parish
-Route::post('addcommittee',[adminController::class,'addCommittee']);
-Route::get('getACommittee/{Id}',[adminController::class,'GetACommittee']);
-Route::get('getAllCommittee',[adminController::class,'FetchAllCommittee']);
-Route::post('updateCommitee/{Id}/update',[adminController::class,'updateCommittee']);
-Route::delete('deleteCommittee/{Id}/delete',[adminController::class,'DeleteCommittee']);
+Route::post('addcommittee', [adminController::class, 'addCommittee']);
+Route::get('getACommittee/{Id}', [adminController::class, 'GetACommittee']);
+Route::get('getAllCommittee', [adminController::class, 'FetchAllCommittee']);
+Route::post('updateCommitee/{Id}/update', [adminController::class, 'updateCommittee']);
+Route::delete('deleteCommittee/{Id}/delete', [adminController::class, 'DeleteCommittee']);
 
 //add committee Member to parish
-Route::post('addcommitteeMember',[adminController::class,'addCommitteeMember']);
-Route::get('getACommitteeMember/{Id}',[adminController::class,'GetACommitteeMember']);
-Route::get('getAllCommitteeMember',[adminController::class,'FetchAllCommitteeMember']);
-Route::post('updateCommiteeMember/update',[adminController::class,'updateCommitteeMember']);
-Route::post('changeCommitteeMember',[adminController::class,'changeCommitteeMember']);
+Route::post('addcommitteeMember', [adminController::class, 'addCommitteeMember']);
+Route::get('getACommitteeMember/{Id}', [adminController::class, 'GetACommitteeMember']);
+Route::get('getAllCommitteeMember', [adminController::class, 'FetchAllCommitteeMember']);
+Route::post('updateCommiteeMember/update', [adminController::class, 'updateCommitteeMember']);
+Route::post('changeCommitteeMember', [adminController::class, 'changeCommitteeMember']);
 
 
 //payment
-Route::post('addCommitteePayment',[MemberController::class,'addCommitteePayment']);
-Route::get('getAMemberPaymentsForAllcommittees/{memberId}',[MemberController::class,'GetACommitteeMemberPayment']);// Member payments in all committes
-Route::get('getAMemberPaymentForAcommitte/{memberId}/{committeRefno}',[MemberController::class,'GetMemberPymtforACommitee']);// Member payments in one committes
+Route::post('addCommitteePayment', [MemberController::class, 'addCommitteePayment']);
+Route::get('getAMemberPaymentsForAllcommittees/{memberId}', [MemberController::class, 'GetACommitteeMemberPayment']); // Member payments in all committes
+Route::get('getAMemberPaymentForAcommitte/{memberId}/{committeRefno}', [MemberController::class, 'GetMemberPymtforACommitee']); // Member payments in one committes
 
-Route::get('getACommitteeNamePayment/{Id}',[MemberController::class,'GetACommitteeNamePayment']);
-Route::post('changeCommitteePayment',[MemberController::class,'changeCommitteePayment']);
+Route::get('getACommitteeNamePayment/{Id}', [MemberController::class, 'GetACommitteeNamePayment']);
+Route::post('changeCommitteePayment', [MemberController::class, 'changeCommitteePayment']);
+
 
