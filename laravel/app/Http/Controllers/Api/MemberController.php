@@ -2,23 +2,25 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\adminController;
-use App\Http\Controllers\Controller;
-use App\Http\Requests\LoginRequest;
-use App\Http\Requests\StoreUserRequest;
-use App\Models\committee;
-use App\Models\committemember;
-use App\Models\committememberpayment;
-use App\Models\juvelineharvest;
-use App\Models\member;
 use App\Models\tithe;
-use App\Traits\HttpResponses;
+use App\Models\member;
+use App\Models\baptism;
+use App\Models\committee;
 use Illuminate\Http\Request;
-use Illuminate\Http\ResponseTrait\original;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
+use App\Traits\HttpResponses;
+use App\Models\committemember;
+use App\Models\juvelineharvest;
+use App\Http\Requests\LoginRequest;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Hash;
+use App\Models\committememberpayment;
+use App\Http\Requests\StoreUserRequest;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\ResponseTrait\original;
+use App\Http\Controllers\Api\adminController;
 
 class MemberController extends Controller
 {
@@ -55,9 +57,11 @@ class MemberController extends Controller
 
         $member = member::where('email', '=', $request->email)->first();
         if (!$member) {
-            return $this->error('',
+            return $this->error(
+                '',
                 "Email address not found! Kindly register as a member to login",
-                200);
+                200
+            );
         } else {
             if ($member && Hash::check($request['password'], $member->password)) {
 
@@ -82,10 +86,20 @@ class MemberController extends Controller
                         'userData' => [
                             // $member
                             'id' => $member->id,
-                            'fullName' => $member->sname, // Adjust the attribute names accordingly
+                            'sname' => $member->sname,
+                            'fname' => $member->fname,
+                            'Title' => $member->Title,
                             'UserId' => $member->UserId,
+                            'dob' => $member->dob,
+                            'mobile' => $member->mobile,
+                            'Gender' => $member->Gender,
                             'avatar' => $thumnailPublicpath,
                             'email' => $member->email,
+                            'ministry' => $member->ministry,
+                            'Residence' => $member->Residence,
+                            'Country' => $member->Country,
+                            'State' => $member->State,
+                            'City' => $member->email,
                             'role' => $member->role,
                             'parishcode' => $member->parishcode,
                             'parishname' => $member->parishname,
@@ -105,10 +119,20 @@ class MemberController extends Controller
                         'userData' => [
                             // $member
                             'id' => $member->id,
-                            'fullName' => $member->sname . ' ' . $member->fname, // Adjust the attribute names accordingly
+                            'sname' => $member->sname,
+                            'fname' => $member->fname,
+                            'Title' => $member->Title,
                             'UserId' => $member->UserId,
+                            'dob' => $member->dob,
+                            'mobile' => $member->mobile,
+                            'Gender' => $member->Gender,
                             'avatar' => $thumnailPublicpath,
                             'email' => $member->email,
+                            'ministry' => $member->ministry,
+                            'Residence' => $member->Residence,
+                            'Country' => $member->Country,
+                            'State' => $member->State,
+                            'City' => $member->email,
                             'role' => $member->role,
                             'parishcode' => $member->parishcode,
                             'parishname' => $member->parishname,
@@ -123,53 +147,66 @@ class MemberController extends Controller
                     'message' => 'Invalid credentials',
                 ];
 
-                return response()->json($response,
-                    401);
+                return response()->json(
+                    $response,
+                    401
+                );
             }
-
         }
     }
 
     public function Addmember(StoreUserRequest $request)
     {
-
         $fetchparish = adminController::FetchAllParishes($request->parishcode);
-
         $decode_Parish = adminController::decodeParishName($fetchparish);
-
         $parishName = $decode_Parish['parishname'];
-
         $append_sender = $from = $parishName;
-        $body = 'Welcome to ' . $parishName . ', We are happy to see you worship the Lord with us , God will meet you at your point of need. Amen';
+        $body = 'Welcome to ' . $parishName . ', We are happy to see you worship the Lord with us, God will meet you at your point of need. Amen';
         $api_token = 'Bw3uqEgd4AF7c6A7Gv5BGWJTTfCP5V9psAs1xM8rGPd59eWSNqYy0QSJSJZ9';
         $direct_refund = 'direct-hosted';
         $to = $request->mobile;
-        $member = validator($request->all());
-        $ParismemberCount = member::where('parishcode', $request->parishcode)->count();
 
-        if ($ParismemberCount == 0) {
-            $ParismemberCount = 1;
-            $num_padded = sprintf("%02d", $ParismemberCount);
-        } elseif ($ParismemberCount < 10) {
-            $ParismemberCount = $ParismemberCount + 1;
-            $num_padded = sprintf("%02d", $ParismemberCount);
-        } else {
-            $num_padded = $ParismemberCount + 1;
+        // Validation
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'password' => 'required|min:6',
+            'sname' => 'required|string',
+            'fname' => 'required|string',
+            'mname' => 'nullable|string',
+            'Status' => 'nullable|string',
+            'Gender' => 'required|string',
+            'dob' => 'required|date',
+            'mobile' => 'required|string',
+            'Altmobile' => 'nullable|string',
+            'address' => 'required|string',
+            'Country' => 'required|string',
+            'State' => 'required|string',
+            'City' => 'required|string',
+            'Title' => 'required|string',
+            'dot' => 'required|date',
+            'ministry' => 'required|string',
+            'parishcode' => 'required|string',
+            'parishname' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        if ($request->hasFile('thumbnail')) {
+        // Generating member number
+        $ParismemberCount = member::where('parishcode', $request->parishcode)->count() + 1;
+        $num_padded = sprintf("%02d", $ParismemberCount);
 
+        // Handle thumbnail upload
+        if ($request->hasFile('thumbnail')) {
             $fileUploaded = $request->file('thumbnail');
             $memberNewPic = $request->parishcode . $num_padded . '.' . $fileUploaded->getClientOriginalExtension();
             $thumbnailPath = $fileUploaded->storeAs('thumbnails', $memberNewPic, 'public');
-
-            //    Store new profile image
-
-            $baseUrl = config('app.url') . '/laravel/storage/app/public/' . $thumbnailPath;
         } else {
             $thumbnailPath = ""; // Or provide a default image path
         }
 
+        // Create member
         $member = member::create([
             'UserId' => $request->parishcode . $num_padded,
             'email' => $request->email,
@@ -196,104 +233,204 @@ class MemberController extends Controller
             'role' => 'Client',
         ]);
 
+        // Send registration SMS and return response
         if ($member) {
-
             $sendRegistrationSms = adminController::sendSmsViaApp($from, $to, $body, $api_token, $append_sender, $direct_refund);
 
             return response()->json([
+                'status' => 200,
                 'data' => $member,
                 'sms' => $sendRegistrationSms,
-                'Member created sucessfully',
-                // 'token'=>$member->createToken('API Token of '.$member->email)->plainTextToken
+                'message' => 'Member created successfully',
+                // Uncomment if needed: 'token' => $member->createToken('API Token of '.$member->email)->plainTextToken
             ]);
-
         } else {
             return response()->json([
                 'status' => 500,
-                'message' => 'Something went wrong user registration not sucessful',
-            ], 200);
+                'message' => 'Something went wrong. User registration was not successful.',
+            ], 500);
         }
-
     }
 
-    public function fetchAllMembers()
+
+    public function FetchAllMembers()
     {
-
-        $members = member::with('children')->get();
-        $memberCount = $members->count();
-        $page = 1;
-        $pageSize = 10;
-        $totalPages = ceil($memberCount / $pageSize);
-
-        if ($members->count() > 0) {
-
+        $allmembers = member::all();
+        if ($allmembers->count() > 0) {
             return response()->json([
                 'status' => 200,
                 'message' => 'Record fetched successfully',
-                'usersDetails' => $members->toArray(),
-                'users' => array_map(function ($member) {
-                    if (empty($member['thumbnail'])) {
-                        $thumnailPublicpath = ' ';
-                    } else {
-
-                        $thumbnailPath = Storage::url($member['thumbnail']);
-                        $thumnailPublicpath = URL::to($thumbnailPath);
-                    }
-                    return [
-                        'id' => $member['id'],
-                        'fullName' => $member['sname'] . ' ' . $member['fname'], // Adjust the attribute names accordingly
-                        'gender' => $member['Gender'],
-                        'avatar' => $thumnailPublicpath,
-                        'email' => $member['email'],
-                        'mobile' => $member['mobile'],
-                        'role' => $member['role'],
-                        // Add other user data as needed
-                    ];
-                }, $members->toArray()),
-
-                // 'users' => $members,
-                // 'usersDetails' => array_map(function ($member) {
-                //     return [
-                //         'id' => $member->id,
-                //         'fullName' => $member->fullName, // Adjust the attribute names accordingly
-                //         'username' => $member->username,
-                //         'avatar' => $member->avatarPublicPath,
-                //         'email' => $member->email,
-                //         'role' => $member->role,
-                //         // Add other user data as needed
-                //     ];
-                // }, $members),
-                // 'users' => [
-                //     // $member
-                //     'id' => $members->id,
-                //     // 'fullName' => $fullName, // Adjust the attribute names accordingly
-                //     // 'username' => $members->username,
-                //     'avatar' =>$thumnailPublicpath,
-                //     'email' => $members->email,
-                //     'role' => $members->role,
-                //     // ... add other user data as needed
-                // ],
-                'totalUsers' => $memberCount,
-                'totalPages' => $totalPages,
-                'page' => $page,
-
+                'members' => $allmembers,
             ], 200);
         } else {
             return response()->json([
                 'status' => 404,
-                'message' => 'No records found!',
-                'member_count' => 0,
-                'total_pages' => 0,
+                'message' => 'No member records found!',
+            ], 200);
+        }
+    }
+
+    public function fetchAllBaptismRecords()
+    {
+        $allrecords = baptism::all();
+        if ($allrecords->count() > 0) {
+            return response()->json([
+                'status' => 200,
+                'message' => 'Record fetched successfully',
+                'members' => $allrecords,
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 404,
+                'message' => 'No member records found!',
+            ], 200);
+        }
+    }
+
+    public function fetchBaptismRecord(Request $request)
+    {
+        $UserId = $request->postData['UserId'];
+
+        // Fetch multiple records based on the UserId
+        $baptisms = baptism::where('UserId', '=', $UserId)->get();
+
+        if ($baptisms->isNotEmpty()) {
+            return response()->json([
+                'status' => 200,
+                'message' => 'Records fetched successfully',
+                'records' => $baptisms,  // Return as an array of records
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 404,
+                'message' => 'No records found for the given UserId',
             ], 404);
         }
-
     }
+
+
+    public function addBaptismRecord(Request $request)
+    {
+        $UserId = $request->baptismData['UserId'];
+        $Status = $request->baptismData['Status'];
+        $Amount = $request->baptismData['Amount'];
+        $Year_of_Joining = $request->baptismData['Year_of_Joining'];
+        $data = $request->baptismData;
+
+        Log::info("<----userId-->" . json_encode($data));
+
+        $validator = Validator::make($data, [
+            'UserId' => 'required|string|max:191',
+            'Status' => 'required|boolean|max:191',
+            'Amount' => 'required|string|max:191',
+            'Year_of_Joining' => 'required|string|max:191',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'error' => $validator->messages(),
+            ], 422);
+        } else {
+            $baptism = baptism::create([
+                'UserId' => $UserId,
+                'Status' => $Status,
+                'Amount' => $Amount,
+                'Year_of_Joining' => $Year_of_Joining,
+            ]);
+
+            if ($baptism) {
+
+                return response()->json([
+                    'status' => 200,
+                    'message' => ' baptism paid sucessfully',
+                    'baptism' => $baptism,
+                ], 200);
+            } else {
+
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Something went wrong baptism not created',
+                ], 200);
+            }
+        }
+    }
+    // public function fetchAllMembers()
+    // {
+
+    //     $members = member::with('children')->get();
+    //     $memberCount = $members->count();
+    //     $page = 1;
+    //     $pageSize = 10;
+    //     $totalPages = ceil($memberCount / $pageSize);
+
+    //     if ($members->count() > 0) {
+
+    //         return response()->json([
+    //             'status' => 200,
+    //             'message' => 'Record fetched successfully',
+    //             'usersDetails' => $members->toArray(),
+    //             'users' => array_map(function ($member) {
+    //                 if (empty($member['thumbnail'])) {
+    //                     $thumnailPublicpath = ' ';
+    //                 } else {
+
+    //                     $thumbnailPath = Storage::url($member['thumbnail']);
+    //                     $thumnailPublicpath = URL::to($thumbnailPath);
+    //                 }
+    //                 return [
+    //                     'id' => $member['id'],
+    //                     'fullName' => $member['sname'] . ' ' . $member['fname'], // Adjust the attribute names accordingly
+    //                     'gender' => $member['Gender'],
+    //                     'avatar' => $thumnailPublicpath,
+    //                     'email' => $member['email'],
+    //                     'mobile' => $member['mobile'],
+    //                     'role' => $member['role'],
+    //                     // Add other user data as needed
+    //                 ];
+    //             }, $members->toArray()),
+
+    //             // 'users' => $members,
+    //             // 'usersDetails' => array_map(function ($member) {
+    //             //     return [
+    //             //         'id' => $member->id,
+    //             //         'fullName' => $member->fullName, // Adjust the attribute names accordingly
+    //             //         'username' => $member->username,
+    //             //         'avatar' => $member->avatarPublicPath,
+    //             //         'email' => $member->email,
+    //             //         'role' => $member->role,
+    //             //         // Add other user data as needed
+    //             //     ];
+    //             // }, $members),
+    //             // 'users' => [
+    //             //     // $member
+    //             //     'id' => $members->id,
+    //             //     // 'fullName' => $fullName, // Adjust the attribute names accordingly
+    //             //     // 'username' => $members->username,
+    //             //     'avatar' =>$thumnailPublicpath,
+    //             //     'email' => $members->email,
+    //             //     'role' => $members->role,
+    //             //     // ... add other user data as needed
+    //             // ],
+    //             'totalUsers' => $memberCount,
+    //             'totalPages' => $totalPages,
+    //             'page' => $page,
+
+    //         ], 200);
+    //     } else {
+    //         return response()->json([
+    //             'status' => 404,
+    //             'message' => 'No records found!',
+    //             'member_count' => 0,
+    //             'total_pages' => 0,
+    //         ], 404);
+    //     }
+
+    // }
 
     public static function GetMember($UserId)
     {
-        $member = Member::with('children')
-            ->where('UserId', '=', $UserId)
-            ->get();
+        $member = Member::where('UserId', '=', $UserId)->get();
 
         if ($member) {
             return response()->json([
@@ -307,13 +444,13 @@ class MemberController extends Controller
                 'message' => 'User not found',
             ], 404);
         }
-
     }
+
 
     public function updateMember(Request $request, String $UserId)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email |max:191',
+            'email' => 'required|email|max:191',
             'sname' => 'required|string|max:191',
             'fname' => 'required|string|max:191',
             'mname' => 'required|string|max:191',
@@ -338,7 +475,6 @@ class MemberController extends Controller
                 'status' => 422,
                 'error' => $validator->messages(),
             ], 422);
-
         } else {
 
             if ($request->hasFile('thumbnail')) {
@@ -386,17 +522,14 @@ class MemberController extends Controller
                     'message' => 'Member information updated Sucessfully !',
                     'member' => $member,
                 ], 200);
-
             } else {
 
                 return response()->json([
                     'status' => 500,
                     'message' => 'Update failed as user is not found',
                 ], 200);
-
             }
         }
-
     }
 
     public function deleteMember($UserId)
@@ -416,7 +549,6 @@ class MemberController extends Controller
                 'message' => 'User/Member not found',
             ], 404);
         }
-
     }
 
     public function AddNewTithe(Request $request)
@@ -436,7 +568,6 @@ class MemberController extends Controller
                 'status' => 422,
                 'error' => $validator->messages(),
             ], 422);
-
         } else {
 
             $member = member::where('UserId', $request->UserId)->get();
@@ -471,7 +602,6 @@ class MemberController extends Controller
                     'parishname' => $parisname,
                     'pymtImg' => $pymtImgPath,
                 ]);
-
             }
 
             if ($tithe) {
@@ -488,7 +618,6 @@ class MemberController extends Controller
                     'message' => 'Something went wrong ' . ' tithe not created',
                 ], 200);
             }
-
         }
     }
 
@@ -507,7 +636,6 @@ class MemberController extends Controller
                 'message' => 'User not found',
             ], 404);
         }
-
     }
 
     public function GetAllParishTithe($parishcode)
@@ -525,7 +653,6 @@ class MemberController extends Controller
                 'message' => 'User not found',
             ], 404);
         }
-
     }
 
     public function UpdateTithe(Request $request, String $UserId)
@@ -551,7 +678,6 @@ class MemberController extends Controller
                 'status' => 422,
                 'error' => $validator->messages(),
             ], 422);
-
         } else {
 
             if ($request->hasFile('pymtImg')) {
@@ -586,17 +712,14 @@ class MemberController extends Controller
                     'message' => 'Tithe information updated Sucessfully !',
                     'tithe' => $tithe,
                 ], 200);
-
             } else {
 
                 return response()->json([
                     'status' => 500,
                     'message' => 'Update failed as user is not found',
                 ], 200);
-
             }
         }
-
     }
 
     public function DeleteTithe($UserId)
@@ -616,7 +739,6 @@ class MemberController extends Controller
                 'message' => 'User/tithe not found',
             ], 404);
         }
-
     }
 
     public function AddNewJuvelineHarvest(Request $request)
@@ -636,7 +758,6 @@ class MemberController extends Controller
                 'status' => 422,
                 'error' => $validator->messages(),
             ], 422);
-
         } else {
 
             $member = member::where('UserId', $request->UserId)->get();
@@ -687,7 +808,6 @@ class MemberController extends Controller
                     'message' => 'Something went wrong ' . ' juvelineharvest not created',
                 ], 200);
             }
-
         }
     }
 
@@ -706,7 +826,6 @@ class MemberController extends Controller
                 'message' => 'User not found',
             ], 404);
         }
-
     }
 
     public function GetAJuvelineDue($UserId)
@@ -724,7 +843,6 @@ class MemberController extends Controller
                 'message' => 'User not found',
             ], 404);
         }
-
     }
 
     public function UpdateJuvelineDue(Request $request, String $UserId)
@@ -750,7 +868,6 @@ class MemberController extends Controller
                 'status' => 422,
                 'error' => $validator->messages(),
             ], 422);
-
         } else {
 
             if ($request->hasFile('pymtImg')) {
@@ -785,17 +902,14 @@ class MemberController extends Controller
                     'message' => 'juvelineharvest information updated Sucessfully !',
                     'juvelineharvest' => $juvelineharvest,
                 ], 200);
-
             } else {
 
                 return response()->json([
                     'status' => 500,
                     'message' => 'Update failed as user is not found',
                 ], 200);
-
             }
         }
-
     }
 
     public function DeleteJuvelineDue($UserId)
@@ -815,52 +929,51 @@ class MemberController extends Controller
                 'message' => 'User/juvelineharvest not found',
             ], 404);
         }
-
     }
 
-//     public function searchAllMembers(Request $request)
-// {
-//     $searchQuery = $request->input('q');
+    //     public function searchAllMembers(Request $request)
+    // {
+    //     $searchQuery = $request->input('q');
 
-//     $query = Member::with('children');
+    //     $query = Member::with('children');
 
-//     // Apply search filter if a search query is provided
-//     if ($searchQuery) {
-//         $query->where(function ($subquery) use ($searchQuery) {
-//             $subquery->where('sname', 'like', '%' . $searchQuery . '%')
-//                      ->orWhere('fname', 'like', '%' . $searchQuery . '%')
-//                      ->orWhere('email', 'like', '%' . $searchQuery . '%');
-//             // Add additional columns as needed for searching
-//         });
-//     }
+    //     // Apply search filter if a search query is provided
+    //     if ($searchQuery) {
+    //         $query->where(function ($subquery) use ($searchQuery) {
+    //             $subquery->where('sname', 'like', '%' . $searchQuery . '%')
+    //                      ->orWhere('fname', 'like', '%' . $searchQuery . '%')
+    //                      ->orWhere('email', 'like', '%' . $searchQuery . '%');
+    //             // Add additional columns as needed for searching
+    //         });
+    //     }
 
-//     $members = $query->get();
-//     $memberCount = $members->count();
-//     $page = 1;
-//     $pageSize = 10;
-//     $totalPages = ceil($memberCount / $pageSize);
+    //     $members = $query->get();
+    //     $memberCount = $members->count();
+    //     $page = 1;
+    //     $pageSize = 10;
+    //     $totalPages = ceil($memberCount / $pageSize);
 
-//     if ($members->count() > 0) {
-//         return response()->json([
-//             'status' => 200,
-//             'message' => 'Record fetched successfully',
-//             'usersDetails' => $members->toArray(),
-//             'users' => array_map(function ($member) {
-//                 // ... (your existing transformation logic)
-//             }, $members->toArray()),
-//             'totalUsers' => $memberCount,
-//             'totalPages' => $totalPages,
-//             'page' => $page,
-//         ], 200);
-//     } else {
-//         return response()->json([
-//             'status' => 404,
-//             'message' => 'No records found!',
-//             'member_count' => 0,
-//             'total_pages' => 0,
-//         ], 404);
-//     }
-// }
+    //     if ($members->count() > 0) {
+    //         return response()->json([
+    //             'status' => 200,
+    //             'message' => 'Record fetched successfully',
+    //             'usersDetails' => $members->toArray(),
+    //             'users' => array_map(function ($member) {
+    //                 // ... (your existing transformation logic)
+    //             }, $members->toArray()),
+    //             'totalUsers' => $memberCount,
+    //             'totalPages' => $totalPages,
+    //             'page' => $page,
+    //         ], 200);
+    //     } else {
+    //         return response()->json([
+    //             'status' => 404,
+    //             'message' => 'No records found!',
+    //             'member_count' => 0,
+    //             'total_pages' => 0,
+    //         ], 404);
+    //     }
+    // }
 
     // public function logout()
     // {
@@ -907,7 +1020,6 @@ class MemberController extends Controller
                 $parishcode = $committee['parishcode'];
                 $parishname = $committee['parishname'];
                 $roleName = $getcommitteeMember['roleName'];
-
             } else {
 
                 //Non committee member details-all other member of the parish contribution
@@ -968,7 +1080,6 @@ class MemberController extends Controller
                 'message' => 'User not found',
             ], 404);
         }
-
     }
 
     public function GetMemberPymtforACommitee($UserId, $committeRefno)
@@ -987,9 +1098,7 @@ class MemberController extends Controller
                 'status' => 404,
                 'message' => 'User not found',
             ], 404);
-
         }
-
     }
     public function GetACommitteeNamePayment($committeRefno)
     {
@@ -1007,7 +1116,6 @@ class MemberController extends Controller
                 'message' => 'User not found',
             ], 404);
         }
-
     }
 
     public function changeCommitteePayment(Request $request)
@@ -1056,5 +1164,4 @@ class MemberController extends Controller
             ], 200);
         }
     }
-
 }

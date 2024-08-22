@@ -34,7 +34,6 @@ class member extends Model
         'dot',
         'MStatus',
         'ministry',
-        'Status',
         'thumbnail',
         'regdate',
         'parishcode',
@@ -48,22 +47,3 @@ class member extends Model
         return $this->hasMany(children::class, 'ParentId', 'UserId');
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

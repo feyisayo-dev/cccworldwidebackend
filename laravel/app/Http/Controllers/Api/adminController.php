@@ -2,27 +2,30 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\MemberController;
-use App\Http\Controllers\Controller;
 use App\Models\area;
-use App\Models\circuit;
-use App\Models\committee;
-use App\Models\committemember;
-use App\Models\district;
 use App\Models\event;
-use App\Models\ministry;
-use App\Models\national;
-use App\Models\parish;
-use App\Models\province;
 use App\Models\state;
 use App\Models\title;
+use App\Models\member;
+use App\Models\parish;
+use App\Models\region;
+use App\Models\circuit;
+use App\Models\district;
+use App\Models\ministry;
+use App\Models\national;
+use App\Models\province;
 use App\Models\vineyard;
 use App\Models\visitors;
+use App\Models\committee;
 use Illuminate\Http\Request;
-use Illuminate\Http\ResponseTrait\original;
+use App\Models\committemember;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use WisdomDiala\Countrypkg\Models\Country;
+use Illuminate\Http\ResponseTrait\original;
+use App\Http\Controllers\Api\MemberController;
 use WisdomDiala\Countrypkg\Models\State as countrystate;
 
 class adminController extends Controller
@@ -93,7 +96,7 @@ class adminController extends Controller
     public function addCommittee(Request $request)
     {
 
-    error_log( json_encode($request->all()));
+        error_log(json_encode($request->all()));
 
         $validator = Validator::make($request->all(), [
             'committename' => 'required|string|max:191',
@@ -126,7 +129,7 @@ class adminController extends Controller
             //decode to get parish name
             $decode_Parish = self::decodeParishName($fetchparish);
 
-            $parishName=$decode_Parish['parishname'];
+            $parishName = $decode_Parish['parishname'];
             $verifyCommitteName = committee::where('committeName', '=', $request->committename)
                 ->where('parishcode', '=', $request->parishcode)
                 ->first();
@@ -151,7 +154,7 @@ class adminController extends Controller
                         return response()->json([
                             'status' => 200,
                             'message' => $request->committename . ' committe for ' . $parishName . '  created sucessfully',
-                            'data'=> $committeeCreateResponse,
+                            'data' => $committeeCreateResponse,
                         ], 200);
                     } else {
                         return response()->json([
@@ -184,7 +187,7 @@ class adminController extends Controller
     public function FetchAllCommittee()
     {
         $allcommittee = committee::all();
-        $committeCount=$allcommittee->count();
+        $committeCount = $allcommittee->count();
         $page = 1;
         $pageSize = 10;
         $totalPages = ceil($committeCount / $pageSize);
@@ -247,7 +250,7 @@ class adminController extends Controller
     {
 
         $committee = committee::where('committeRefno', '=', $committeRefno)->first();
-//return($committee->committeName);
+        //return($committee->committeName);
         if ($committee) {
 
             $committee->delete();
@@ -262,7 +265,6 @@ class adminController extends Controller
                 'message' => $committee->committeName . ' Commitee not found',
             ], 404);
         }
-
     }
 
     public function addCommitteeMember(Request $request)
@@ -282,7 +284,7 @@ class adminController extends Controller
             ], 422);
         } else {
 
-// return ($request->all());
+            // return ($request->all());
             $committee = committee::where('committeRefno', '=', $request->committeRefno)->first();
 
             if (!$committee) {
@@ -338,7 +340,6 @@ class adminController extends Controller
                         'message' => $fullName . ' not successfully as  created ' . $committeeName . 'member',
                     ], 200);
                 }
-
             }
         }
     }
@@ -395,9 +396,9 @@ class adminController extends Controller
             ], 422);
         }
 
-        $getcommitteeMember = CommitteMember::where('memberId',$request->memberId)
-        ->where('committeRefno', $request->committeRefno)
-        ->first();
+        $getcommitteeMember = CommitteMember::where('memberId', $request->memberId)
+            ->where('committeRefno', $request->committeRefno)
+            ->first();
 
 
         $committee = committee::where('committeRefno', '=', $request->committeRefno)->first();
@@ -406,33 +407,33 @@ class adminController extends Controller
 
         if ($getcommitteeMember) {
 
-            $getcommitteeMemberUpdate =$getcommitteeMember->update([
+            $getcommitteeMemberUpdate = $getcommitteeMember->update([
                 'memberRole' => $request->memberRole,
                 'roleId' => $request->roleId,
                 'roleName' => $request->roleName,
             ]);
 
             if ($getcommitteeMemberUpdate) {
+                return response()->json([
+                    'status' => 200,
+                    'message' =>  'committee member information updated Sucessfully !',
+                    'data' => $getcommitteeMemberUpdate,
+                ], 200);
+            } else {
+
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Update failed as ' . $request->fullName . ' comittemember is not found',
+                ], 200);
+            }
+        } else {
             return response()->json([
                 'status' => 200,
-                'message' =>  'committee member information updated Sucessfully !',
-                'data' => $getcommitteeMemberUpdate,
-            ], 200);
-        }else {
-
-            return response()->json([
-                'status' => 500,
-                'message' => 'Update failed as ' . $request->fullName . ' comittemember is not found',
-            ], 200);
+                'message' =>  'Member not found in committee',
+                'committee' => $committee,
+            ], 401);
         }
-    }else{
-        return response()->json([
-            'status' => 200,
-            'message' =>  'Member not found in committee',
-            'committee'=> $committee,
-        ], 401);
     }
-}
 
     public function changeCommitteeMember(Request $request)
     {
@@ -453,30 +454,29 @@ class adminController extends Controller
             ], 422);
         }
 
-        $getcommitteeMember = CommitteMember::where('memberId',$request->new_member_id)
-                                             ->where('committeRefno', $request->committeRefno)->first();
+        $getcommitteeMember = CommitteMember::where('memberId', $request->new_member_id)
+            ->where('committeRefno', $request->committeRefno)->first();
 
-        if ($getcommitteeMember){
-         return response()->json([
+        if ($getcommitteeMember) {
+            return response()->json([
                 'status' => 401,
-                'message' => $getcommitteeMember['memberName']. 'is already a member of '. $getcommitteeMember['committeName'] . ' committee',
+                'message' => $getcommitteeMember['memberName'] . 'is already a member of ' . $getcommitteeMember['committeName'] . ' committee',
             ], 422);
-
-        }else{
+        } else {
             $getNewMemberDetails = MemberController::GetMember($request->new_member_id); //GetMember function is from Get member controller
 
-             $decodeMemberName = self::decodeMemberName($getNewMemberDetails); // decodeMemberName function is down down
+            $decodeMemberName = self::decodeMemberName($getNewMemberDetails); // decodeMemberName function is down down
 
-            $fullName=$decodeMemberName['sname'] .' '.$decodeMemberName['fname'] .' '.$decodeMemberName['mname'];
-            $title=$decodeMemberName['Title'];
-            $gender=$decodeMemberName['Gender'];
+            $fullName = $decodeMemberName['sname'] . ' ' . $decodeMemberName['fname'] . ' ' . $decodeMemberName['mname'];
+            $title = $decodeMemberName['Title'];
+            $gender = $decodeMemberName['Gender'];
 
-            $getOldcommitteeMember = CommitteMember::where('memberId',$request->memberId)->where('committeRefno', $request->committeRefno)->first();
+            $getOldcommitteeMember = CommitteMember::where('memberId', $request->memberId)->where('committeRefno', $request->committeRefno)->first();
 
             if ($getOldcommitteeMember && $getNewMemberDetails) {
                 // Update the old committee member details with the new member details
                 $getOldcommitteeMember->update([
-                    'memberName' =>$fullName,
+                    'memberName' => $fullName,
                     'memberId' => $request->new_member_id,
                     "memberRole" => $request->memberRole,
                     "roleId"  => $request->roleId,
@@ -491,7 +491,7 @@ class adminController extends Controller
                     return response()->json([
                         'status' => 200,
                         'message' => $fullName . ' Nominated as ' . $getOldcommitteeMember['committeName'] . '  member',
-                        'data'=>$getOldcommitteeMember,
+                        'data' => $getOldcommitteeMember,
                     ], 200);
                 } else {
                     return response()->json([
@@ -500,8 +500,6 @@ class adminController extends Controller
                     ], 200);
                 }
             }
-
-
         }
 
         // $getMember = MemberController::GetMember($request->memberId); //GetMember function is from Get member controller
@@ -570,7 +568,7 @@ class adminController extends Controller
             $title->delete();
             return response()->json([
                 'status' => 200,
-                'message' => 'title deleted  successfully',
+                'message' => 'Title/Anointing deleted  successfully',
             ], 200);
         } else {
             return response()->json([
@@ -711,7 +709,6 @@ class adminController extends Controller
                 'message' => 'Something went wrong title not added',
             ], 200);
         }
-
     }
 
     private function addStateParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory)
@@ -759,8 +756,56 @@ class adminController extends Controller
                 'message' => 'Something went wrong State parish not added',
             ], 200);
         }
-
     }
+
+    private function addRegionParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory)
+    {
+
+        $countryDetails = country::where('id', $country)->first();
+        // $CountryCode = strtoupper(substr($countryDetails->name, 0, 3));
+
+        $countRegion = region::where('state', 'LIKE', '%' . $parishState . '%')->count();
+
+        $scode = strtoupper(substr($parishState, 0, 2));
+
+        if ($countRegion == 0) {
+            $countRegion = 1;
+            $num_padded = sprintf("%02d", $countRegion);
+        } elseif ($countRegion < 10) {
+            $countRegion = $countRegion + 1;
+            $num_padded = sprintf("%02d", $countRegion);
+        } else {
+            $num_padded = $countRegion + 1;
+        }
+
+        $region = region::create([
+            'email' => $email,
+            'phone1' => $phone1,
+            'phone2' => $phone2,
+            'country' => $countryDetails->name,
+            'state' => $parishState,
+            'city' => $city,
+            'address' => $address,
+            'regionname' => $parishName,
+            'nationalcode' => $reportTo,
+            'rcode' => $scode . $num_padded,
+            'category' => $parishCategory,
+        ]);
+
+
+        if ($region) {
+            return response()->json([
+                'status' => 200,
+                'message' => 'Region parish added sucessfully',
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Something went wrong Region parish not added',
+            ], 200);
+        }
+    }
+
 
     public function addAreaParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory)
     {
@@ -806,7 +851,6 @@ class adminController extends Controller
                 'message' => 'Something went wrong State parish not added',
             ], 200);
         }
-
     }
 
     public function addProvinceParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory)
@@ -853,7 +897,6 @@ class adminController extends Controller
                 'message' => 'Something went wrong State parish not added',
             ], 200);
         }
-
     }
 
     public function addCircuitParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory)
@@ -900,7 +943,6 @@ class adminController extends Controller
                 'message' => 'Something went wrong State parish not added',
             ], 200);
         }
-
     }
 
     public function addDistrictParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory)
@@ -947,7 +989,6 @@ class adminController extends Controller
                 'message' => 'Something went wrong State parish not added',
             ], 200);
         }
-
     }
 
     public function addParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory)
@@ -994,18 +1035,19 @@ class adminController extends Controller
                 'message' => 'Something went wrong State parish not added',
             ], 200);
         }
-
     }
 
     public function UpdateNational(Request $request, string $code)
     {
-        $validator = Validator::make($request->all(), [
+        $data = $request->postData;
+
+        $validator = Validator::make($data, [
             'email' => 'required|string|max:191',
             'phone1' => 'required|string|max:191',
             'country' => 'required|string|max:191',
             'state' => 'required|string|max:191',
             'address' => 'required|string|max:191',
-            'nationalname' => 'required|string|max:191',
+            'name' => 'required|string|max:191',
         ]);
 
         if ($validator->fails()) {
@@ -1014,27 +1056,24 @@ class adminController extends Controller
                 'error' => $validator->messages(),
             ], 422);
         } else {
-
             $nationalParish = national::where('code', '=', $code)->first();
 
             if ($nationalParish) {
                 $nationalParish->update([
-                    'email' => $request->email,
-                    'phone1' => $request->phone1,
-                    'phone2' => $request->phone2,
-                    'country' => $request->country,
-                    'states' => $request->state,
-                    'city' => $request->city,
-                    'address' => $request->address,
-                    'nationalname' => $request->nationalname,
-
+                    'email' => $data['email'],
+                    'phone1' => $data['phone1'],
+                    'phone2' => $data['phone2'],
+                    'country' => $data['country'],
+                    'states' => $data['state'],
+                    'city' => $data['city'],
+                    'address' => $data['address'],
+                    'nationalname' => $data['name'],
                 ]);
                 return response()->json([
                     'status' => 200,
-                    'message' => 'National Parish information updated Sucessfully !',
+                    'message' => 'National Parish information updated Sucessfully!',
                 ], 200);
             } else {
-
                 return response()->json([
                     'status' => 500,
                     'message' => 'Update failed as national title is not found',
@@ -1052,7 +1091,7 @@ class adminController extends Controller
             $national->delete();
             return response()->json([
                 'status' => 200,
-                'message' => 'national deleted  successfully',
+                'message' => 'National parish deleted  successfully',
             ], 200);
         } else {
             return response()->json([
@@ -1099,14 +1138,15 @@ class adminController extends Controller
 
     public function UpdateState(Request $request, string $scode)
     {
-        $validator = Validator::make($request->all(), [
-            //validator used in input data(Add New State)-copy and paste
+        $data = $request->postData;
+
+        $validator = Validator::make($data, [
             'email' => 'required|string|max:191',
             'phone1' => 'required|string|max:191',
             'country' => 'required|string|max:191',
             'state' => 'required|string|max:191',
             'address' => 'required|string|max:191',
-            'statename' => 'required|string|max:191',
+            'name' => 'required|string|max:191',
         ]);
 
         if ($validator->fails()) {
@@ -1115,32 +1155,29 @@ class adminController extends Controller
                 'error' => $validator->messages(),
             ], 422);
         } else {
-
             $StateParish = state::where('scode', '=', $scode)->first();
 
             if ($StateParish) {
                 $StateParish->update([
-                    //Copy payload from Adding New State Minus scode
-                    'email' => $request->email,
-                    'phone1' => $request->phone1,
-                    'phone2' => $request->phone2,
-                    'country' => $request->country,
-                    'state' => $request->state,
-                    'city' => $request->city,
-                    'address' => $request->address,
-                    'statename' => $request->statename,
-                    'nationalcode' => $request->nationalcode,
-
+                    'email' => $data['email'],
+                    'phone1' => $data['phone1'],
+                    'phone2' => $data['phone2'],
+                    'country' => $data['country'],
+                    'state' => $data['state'],
+                    'city' => $data['city'],
+                    'address' => $data['address'],
+                    'statename' => $data['name'],
+                    'nationalcode' => $data['reportTo'],
                 ]);
+
                 return response()->json([
                     'status' => 200,
-                    'message' => $request->statename . 'information updated Sucessfully !',
+                    'message' => $data['name'] . ' information updated successfully!',
                 ], 200);
             } else {
-
                 return response()->json([
                     'status' => 500,
-                    'message' => 'Update failed ' . $request->statename . ' Parish is not found',
+                    'message' => 'Update failed as ' . $data['name'] . ' Parish is not found',
                 ], 200);
             }
         }
@@ -1160,11 +1197,29 @@ class adminController extends Controller
         } else {
             return response()->json([
                 'status' => 404,
-                'message' => $state->statename . ' not found',
+                'message' => 'Data not found',
             ], 404);
         }
     }
 
+
+    public function deleteRegion($rcode)
+    {
+        $region = region::where('rcode', '=', $rcode)->first();
+        if ($region) {
+
+            $region->delete();
+            return response()->json([
+                'status' => 200,
+                'message' => $region->regionname . ' deleted  successfully',
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 404,
+                'message' => $region->regionname . ' not found',
+            ], 404);
+        }
+    }
     public function FetchAllarea()
     {
         //   $area = area::all();
@@ -1203,18 +1258,73 @@ class adminController extends Controller
         }
     }
 
-    public function UpdateArea(Request $request, string $acode)
+    public function UpdateRegion(Request $request, string $rcode)
     {
-        $validator = Validator::make($request->all(), [
-            //validator used in input data(Add New Area)-copy and paste
+        $data = $request->postData;
+
+        // Validate the extracted data
+        $validator = Validator::make($data, [
+            // Validator for updating region
             'email' => 'required|string|max:191',
             'phone1' => 'required|string|max:191',
             'country' => 'required|string|max:191',
             'state' => 'required|string|max:191',
             'city' => 'required|string|max:191',
             'address' => 'required|string|max:191',
-            'areaname' => 'required|string|max:191',
-            'reportingcode' => 'required|string|max:191',
+            'name' => 'required|string|max:191',
+            'reportTo' => 'required|string|max:191',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'error' => $validator->messages(),
+            ], 422);
+        } else {
+
+            $RegionParish = region::where('rcode', '=', $rcode)->first();
+
+            if ($RegionParish) {
+                $RegionParish->update([
+                    // Payload for updating the region
+                    'email' =>  $data['email'],
+                    'phone1' =>  $data['phone1'],
+                    'phone2' =>  $data['phone2'],
+                    'country' =>  $data['country'],
+                    'state' =>  $data['state'],
+                    'city' =>  $data['city'],
+                    'address' =>  $data['address'],
+                    'regionname' =>  $data['name'],
+                    'reportingcode' =>  $data['reportTo'],
+                ]);
+                return response()->json([
+                    'status' => 200,
+                    'message' =>  $data['name'] . ' information updated Successfully!',
+                ], 200);
+            } else {
+
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Update failed: ' .  $data['name'] . ' Region not found',
+                ], 200);
+            }
+        }
+    }
+
+
+    public function UpdateArea(Request $request, string $acode)
+    {
+        $data = $request->postData;
+
+        $validator = Validator::make($data, [
+            'email' => 'required|string|max:191',
+            'phone1' => 'required|string|max:191',
+            'country' => 'required|string|max:191',
+            'state' => 'required|string|max:191',
+            'city' => 'required|string|max:191',
+            'address' => 'required|string|max:191',
+            'name' => 'required|string|max:191',
+            'reportTo' => 'required|string|max:191',
         ]);
 
         if ($validator->fails()) {
@@ -1229,26 +1339,26 @@ class adminController extends Controller
             if ($AreaParish) {
                 $AreaParish->update([
                     //Copy payload from Adding New State Minus acode
-                    'email' => $request->email,
-                    'phone1' => $request->phone1,
-                    'phone2' => $request->phone2,
-                    'country' => $request->country,
-                    'state' => $request->state,
-                    'city' => $request->city,
-                    'address' => $request->address,
-                    'areaname' => $request->areaname,
-                    'reportingcode' => $request->reportingcode,
+                    'email' =>  $data['email'],
+                    'phone1' =>  $data['phone1'],
+                    'phone2' =>  $data['phone2'],
+                    'country' =>  $data['country'],
+                    'state' =>  $data['state'],
+                    'city' =>  $data['city'],
+                    'address' =>  $data['address'],
+                    'areaname' =>  $data['name'],
+                    'reportingcode' =>  $data['reportTo'],
 
                 ]);
                 return response()->json([
                     'status' => 200,
-                    'message' => $request->areaname . 'information updated Sucessfully !',
+                    'message' =>  $data['name'] . 'information updated Sucessfully !',
                 ], 200);
             } else {
 
                 return response()->json([
                     'status' => 500,
-                    'message' => 'Update failed ' . $request->areaname . ' Parish is not found',
+                    'message' => 'Update failed ' .  $data['name'] . ' Parish is not found',
                 ], 200);
             }
         }
@@ -1332,16 +1442,17 @@ class adminController extends Controller
 
     public function UpdateProvince(Request $request, string $pcode)
     {
-        $validator = Validator::make($request->all(), [
-            //validator used in input data(Add New Province)-copy and paste
+        $data = $request->postData;
+
+        $validator = Validator::make($data, [
             'email' => 'required|string|max:191',
             'phone1' => 'required|string|max:191',
             'country' => 'required|string|max:191',
             'state' => 'required|string|max:191',
             'city' => 'required|string|max:191',
             'address' => 'required|string|max:191',
-            'provincename' => 'required|string|max:191',
-            'reportingcode' => 'required|string|max:191',
+            'name' => 'required|string|max:191',
+            'reportTo' => 'required|string|max:191',
         ]);
 
         if ($validator->fails()) {
@@ -1356,26 +1467,26 @@ class adminController extends Controller
             if ($provinceParish) {
                 $provinceParish->update([
                     //Copy payload from Adding New Province Minus pcode
-                    'email' => $request->email,
-                    'phone1' => $request->phone1,
-                    'phone2' => $request->phone2,
-                    'country' => $request->country,
-                    'state' => $request->state,
-                    'city' => $request->city,
-                    'address' => $request->address,
-                    'provincename' => $request->provincename,
-                    'reportingcode' => $request->reportingcode,
+                    'email' =>  $data['email'],
+                    'phone1' =>  $data['phone1'],
+                    'phone2' =>  $data['phone2'],
+                    'country' =>  $data['country'],
+                    'state' =>  $data['state'],
+                    'city' =>  $data['city'],
+                    'address' =>  $data['address'],
+                    'provincename' =>  $data['name'],
+                    'reportingcode' =>  $data['reportTo'],
 
                 ]);
                 return response()->json([
                     'status' => 200,
-                    'message' => $request->provincename . 'information updated Sucessfully !',
+                    'message' =>  $data['name'] . 'information updated Sucessfully !',
                 ], 200);
             } else {
 
                 return response()->json([
                     'status' => 500,
-                    'message' => 'Update failed ' . $request->provincename . ' Parish is not found',
+                    'message' => 'Update failed ' .  $data['name'] . ' Parish is not found',
                 ], 200);
             }
         }
@@ -1471,16 +1582,19 @@ class adminController extends Controller
 
     public function UpdateCircuit(Request $request, string $cicode)
     {
-        $validator = Validator::make($request->all(), [
-            //validator used in input data(Add New Circuit)-copy and paste
+        $data = $request->postData;
+
+
+        $validator = Validator::make($data, [
+
             'email' => 'required|string|max:191',
             'phone1' => 'required|string|max:191',
             'country' => 'required|string|max:191',
             'state' => 'required|string|max:191',
             'city' => 'required|string|max:191',
             'address' => 'required|string|max:191',
-            'circuitname' => 'required|string|max:191',
-            'reportingcode' => 'required|string|max:191',
+            'name' => 'required|string|max:191',
+            'reportTo' => 'required|string|max:191',
             // we dont have to add cicode bc we will generate it ourselve
         ]);
 
@@ -1496,25 +1610,25 @@ class adminController extends Controller
             if ($circuitParish) {
                 $circuitParish->update([
                     //Copy payload from Adding New Circuit Minus pcode
-                    'email' => $request->email,
-                    'phone1' => $request->phone1,
-                    'phone2' => $request->phone2,
-                    'country' => $request->country,
-                    'state' => $request->state,
-                    'city' => $request->city,
-                    'address' => $request->address,
-                    'circuitname' => $request->circuitname,
-                    'reportingcode' => $request->reportingcode,
+                    'email' =>  $data['email'],
+                    'phone1' =>  $data['phone1'],
+                    'phone2' =>  $data['phone2'],
+                    'country' =>  $data['country'],
+                    'state' =>  $data['state'],
+                    'city' =>  $data['city'],
+                    'address' =>  $data['address'],
+                    'circuitname' =>  $data['name'],
+                    'reportingcode' =>  $data['reportTo'],
                 ]);
                 return response()->json([
                     'status' => 200,
-                    'message' => $request->circuitname . ' Circuit updated Sucessfully !',
+                    'message' =>  $data['name'] . ' Circuit updated Sucessfully !',
                 ], 200);
             } else {
 
                 return response()->json([
                     'status' => 500,
-                    'message' => 'Update failed ' . $request->circuitname . ' Circuit is not found',
+                    'message' => 'Update failed ' .  $data['name'] . ' Circuit is not found',
                 ], 200);
             }
         }
@@ -1618,17 +1732,18 @@ class adminController extends Controller
 
     public function UpdateDistrict(Request $request, string $dcode)
     {
-        $validator = Validator::make($request->all(), [
-            //validator used in input data(Add New disrtict)-copy and paste
+        $data = $request->postData;
+
+        // Validate the extracted data
+        $validator = Validator::make($data, [
             'email' => 'required|string|max:191',
             'phone1' => 'required|string|max:191',
             'country' => 'required|string|max:191',
             'state' => 'required|string|max:191',
             'city' => 'required|string|max:191',
             'address' => 'required|string|max:191',
-            'districtname' => 'required|string|max:191',
-            'reportingcode' => 'required|string|max:191',
-            // we dont have to add dcode bc we will generate it ourselve
+            'name' => 'required|string|max:191',
+            'reportTo' => 'required|string|max:191',
         ]);
 
         if ($validator->fails()) {
@@ -1638,31 +1753,28 @@ class adminController extends Controller
             ], 422);
         } else {
 
-            $districtParish = district::where('dcode', '=', $dcode)->first();
+            $district = District::where('dcode', '=', $dcode)->first();
 
-            if ($districtParish) {
-                $districtParish->update([
-                    //Copy payload from Adding New Diostrict Minus pcode
-                    'email' => $request->email,
-                    'phone1' => $request->phone1,
-                    'phone2' => $request->phone2,
-                    'country' => $request->country,
-                    'state' => $request->state,
-                    'city' => $request->city,
-                    'address' => $request->address,
-                    'districtname' => $request->districtname,
-                    'reportingcode' => $request->reportingcode,
-                    //dcode will not be included because its the one we are using
+            if ($district) {
+                $district->update([
+                    'email' =>  $data['email'],
+                    'phone1' =>  $data['phone1'],
+                    'phone2' =>  $data['phone2'],
+                    'country' =>  $data['country'],
+                    'state' =>  $data['state'],
+                    'city' =>  $data['city'],
+                    'address' =>  $data['address'],
+                    'districtname' =>  $data['name'],
+                    'reportingcode' =>  $data['reportTo'],
                 ]);
                 return response()->json([
                     'status' => 200,
-                    'message' => $request->districtname . ' District updated Sucessfully !',
+                    'message' =>  $data['name'] . ' district updated successfully!',
                 ], 200);
             } else {
-
                 return response()->json([
                     'status' => 500,
-                    'message' => 'Update failed ' . $request->districtname . ' District is not found',
+                    'message' => 'Update failed: ' .  $data['name'] . ' district not found',
                 ], 200);
             }
         }
@@ -1711,31 +1823,119 @@ class adminController extends Controller
 
             $status = self::addStateParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
             return $status;
+        } elseif (isset($parishCategory) && ($parishCategory) == 'region') {
 
+
+
+            $status = self::addRegionParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
+            return $status;
         } elseif (isset($parishCategory) && ($parishCategory) == 'area') {
             $status = self::addAreaParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
             return $status;
-
         } elseif (isset($parishCategory) && ($parishCategory) == 'province') {
             $status = self::addProvinceParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
             return $status;
-
         } elseif (isset($parishCategory) && ($parishCategory) == 'circuit') {
-
             $status = self::addCircuitParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
             return $status;
-
         } elseif (isset($parishCategory) && ($parishCategory) == 'district') {
-
             $status = self::addDistrictParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
             return $status;
-
         } else {
             $status = self::addParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
             return $status;
         }
-
     }
+
+
+
+    //Use to delete any parish from national to the lowest
+    public function deleteAparish(Request $request)
+    {
+
+        $parishcode = $request->postData['parishcode'];
+        $parishCategory = $request->postData['category'];
+
+        Log::error("delete param==>" . json_encode($request->postData));
+
+        if (isset($parishCategory) && ($parishCategory) == 'national') {
+            //add national parish
+            $status = self::deleteNational($parishcode);
+            return $status;
+            //add state parish
+        } elseif (isset($parishCategory) && ($parishCategory) == 'state') {
+
+            $status = self::deleteState($parishcode);
+            return $status;
+        } elseif (isset($parishCategory) && ($parishCategory) == 'region') {
+
+
+            $status = self::deleteRegion($parishcode);
+            return $status;
+        } elseif (isset($parishCategory) && ($parishCategory) == 'area') {
+
+            $status = self::deleteArea($parishcode);
+            return $status;
+        } elseif (isset($parishCategory) && ($parishCategory) == 'province') {
+            $status = self::DeleteProvince($parishcode);
+            return $status;
+        } elseif (isset($parishCategory) && ($parishCategory) == 'circuit') {
+            $status = self::DeleteCircuit($parishcode);
+            return $status;
+        } elseif (isset($parishCategory) && ($parishCategory) == 'district') {
+            $status = self::DeleteDistrict($parishcode);
+            return $status;
+        } else {
+            $status = self::DeleteParish($parishcode);
+            return $status;
+        }
+    }
+
+    public function updateAparish(Request $request)
+    {
+        // Log the received postData
+        Log::info("Received postData: " . json_encode($request->postData));
+
+        $parishcode = $request->postData['parishcode'];
+        $parishCategory = $request->postData['category'];
+
+        Log::error("Update param==>" . json_encode($request->postData));
+
+        if (isset($parishCategory) && $parishCategory == 'national') {
+            // Update national parish
+            $status = self::UpdateNational($request, $parishcode);
+            return $status;
+        } elseif (isset($parishCategory) && $parishCategory == 'state') {
+            // Update state parish
+            $status = self::UpdateState($request, $parishcode);
+            return $status;
+        } elseif (isset($parishCategory) && $parishCategory == 'region') {
+            // Update region parish
+            $status = self::UpdateRegion($request, $parishcode);
+            return $status;
+        } elseif (isset($parishCategory) && $parishCategory == 'area') {
+            // Update area parish
+            $status = self::UpdateArea($request, $parishcode);
+            return $status;
+        } elseif (isset($parishCategory) && $parishCategory == 'province') {
+            // Update province parish
+            $status = self::UpdateProvince($request, $parishcode);
+            return $status;
+        } elseif (isset($parishCategory) && $parishCategory == 'circuit') {
+            // Update circuit parish
+            $status = self::UpdateCircuit($request, $parishcode);
+            return $status;
+        } elseif (isset($parishCategory) && $parishCategory == 'district') {
+            // Update district parish
+            $status = self::UpdateDistrict($request, $parishcode);
+            return $status;
+        } else {
+            // Update general parish
+            $status = self::UpdateParish($request, $parishcode);
+            return $status;
+        }
+    }
+
 
     public function FetchAllParish()
     {
@@ -1784,16 +1984,18 @@ class adminController extends Controller
 
     public function UpdateParish(Request $request, string $picode)
     {
-        $validator = Validator::make($request->all(), [
-            //validator used in input data(Add New Parish)-copy and paste
+
+        $data = $request->postData;
+
+        $validator = Validator::make($data, [
             'email' => 'required|string|max:191',
             'phone1' => 'required|string|max:191',
             'country' => 'required|string|max:191',
             'state' => 'required|string|max:191',
             'city' => 'required|string|max:191',
             'address' => 'required|string|max:191',
-            'parishname' => 'required|string|max:191',
-            'reportingcode' => 'required|string|max:191',
+            'name' => 'required|string|max:191',
+            'reportTo' => 'required|string|max:191',
             // we dont have to add picode bc we will generate it ourselve
         ]);
 
@@ -1809,26 +2011,26 @@ class adminController extends Controller
             if ($parishParish) {
                 $parishParish->update([
                     //Copy payload from Adding New Diostrict Minus pcode
-                    'email' => $request->email,
-                    'phone1' => $request->phone1,
-                    'phone2' => $request->phone2,
-                    'country' => $request->country,
-                    'state' => $request->state,
-                    'city' => $request->city,
-                    'address' => $request->address,
-                    'parishname' => $request->parishname,
-                    'reportingcode' => $request->reportingcode,
+                    'email' => $data['email'],
+                    'phone1' => $data['phone1'],
+                    'phone2' => $data['phone2'],
+                    'country' => $data['country'],
+                    'state' => $data['state'],
+                    'city' => $data['city'],
+                    'address' => $data['address'],
+                    'parishname' => $data['parishname'],
+                    'reportingcode' => $data['reportTo'],
                     //dcode will not be included because its the one we are using
                 ]);
                 return response()->json([
                     'status' => 200,
-                    'message' => $request->parishname . ' parish updated Sucessfully !',
+                    'message' =>  $data['name'] . ' parish updated Sucessfully !',
                 ], 200);
             } else {
 
                 return response()->json([
                     'status' => 500,
-                    'message' => 'Update failed ' . $request->parishname . ' parish is not found',
+                    'message' => 'Update failed ' .  $data['name'] . ' parish is not found',
                 ], 200);
             }
         }
@@ -1858,6 +2060,7 @@ class adminController extends Controller
         //Get All parishes
         $national = national::select('id', 'email', 'phone1', 'phone2', 'country', 'states', 'city', 'address', 'nationalname as parishname', 'code as parishcode', 'category', national::raw('null as reportingTo'));
         $state = state::select('id', 'email', 'phone1', 'phone2', 'country', 'state', 'city', 'address', 'statename as parishname', 'scode as parishcode', 'category', 'nationalcode as reportingcode');
+        $region = region::select('id', 'email', 'phone1', 'phone2', 'country', 'state', 'city', 'address', 'regionname as parishname', 'rcode as parishcode', 'category', 'nationalcode as reportingcode');
         $area = area::select('id', 'email', 'phone1', 'phone2', 'country', 'state', 'city', 'address', 'areaname as parishname', 'acode as parishcode', 'category', 'reportingcode');
         $province = province::select('id', 'email', 'phone1', 'phone2', 'country', 'state', 'city', 'address', 'provincename as parishname', 'pcode as parishcode', 'category', 'reportingcode');
         $circuit = circuit::select('id', 'email', 'phone1', 'phone2', 'country', 'state', 'city', 'address', 'circuitname as parishname', 'cicode as parishcode', 'category', 'reportingcode');
@@ -1868,6 +2071,7 @@ class adminController extends Controller
         if ($parishcode !== null) {
             $national = national::select('id', 'email', 'phone1', 'phone2', 'country', 'states', 'city', 'address', 'nationalname as parishname', 'code as parishcode', 'category', national::raw('null as reportingTo'))->where('code', $parishcode);
             $state = state::select('id', 'email', 'phone1', 'phone2', 'country', 'state', 'city', 'address', 'statename as parishname', 'scode as parishcode', 'category', 'nationalcode as reportingcode')->orWhere('scode', $parishcode);
+            $region = region::select('id', 'email', 'phone1', 'phone2', 'country', 'state', 'city', 'address', 'regionname as parishname', 'rcode as parishcode', 'category', 'nationalcode as reportingcode')->orWhere('rcode', $parishcode);
             $area = area::select('id', 'email', 'phone1', 'phone2', 'country', 'state', 'city', 'address', 'areaname as parishname', 'acode as parishcode', 'category', 'reportingcode')->orWhere('acode', $parishcode);
             $province = province::select('id', 'email', 'phone1', 'phone2', 'country', 'state', 'city', 'address', 'provincename as parishname', 'pcode as parishcode', 'category', 'reportingcode')->orWhere('pcode', $parishcode);
             $circuit = circuit::select('id', 'email', 'phone1', 'phone2', 'country', 'state', 'city', 'address', 'circuitname as parishname', 'cicode as parishcode', 'category', 'reportingcode')->orWhere('cicode', $parishcode);
@@ -1876,6 +2080,7 @@ class adminController extends Controller
         }
         $result = $national
             ->union($state)
+            ->union($region)
             ->union($area)
             ->union($province)
             ->union($circuit)
@@ -2117,7 +2322,7 @@ class adminController extends Controller
             return response()->json([
                 'status' => 200,
                 'message' => $EventId . ' Record fetched successfully',
-                'event ' => $event,
+                'event' => $event,
             ], 200);
         } else {
             return response()->json([
@@ -2330,13 +2535,16 @@ class adminController extends Controller
         }
     }
 
-    public function updateMinistry(Request $request, String $ministryId)
+    public function updateMinistry(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $data = $request->postData;
+
+        $validator = Validator::make($data, [
             //validator used in input data(Add New Event)-copy and paste
             'ministry' => 'required|string|max:191',
 
         ]);
+        $ministryId = $request->postData['id'];
 
         if ($validator->fails()) {
             return response()->json([
@@ -2348,7 +2556,7 @@ class adminController extends Controller
 
         if ($ministry) {
             $ministry->update([
-                'ministry' => $request->ministry,
+                'ministry' => $request->postData['ministry'],
 
             ]);
             return response()->json([
@@ -2468,7 +2676,7 @@ class adminController extends Controller
             return response()->json([
                 'status' => 200,
                 'message' => $Visitor . ' Record fetched successfully',
-                'event ' => $visitor,
+                'event' => $visitor,
             ], 200);
         } else {
             return response()->json([
@@ -2558,8 +2766,7 @@ class adminController extends Controller
             }
 
 
-        return ($parishDetails);
-
+            return ($parishDetails);
         } else {
             return response()->json([
                 'status' => 404,
@@ -2594,13 +2801,28 @@ class adminController extends Controller
                 $memberDetails[$key] = $value; // Assign each key-value pair to the associative array
             }
             return ($memberDetails);
-
         } else {
             return response()->json([
                 'status' => 404,
                 'message' => 'Member data not found in response',
             ], 404);
         }
-
     }
+    public function FetchAllMembers()
+    {
+        $allmembers = member::all();
+        if ($allmembers->count() > 0) {
+            return response()->json([
+                'status' => 200,
+                'message' => 'Record fetched successfully',
+                'members ' => $allmembers,
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 404,
+                'message ' => 'No member records found!',
+            ], 200);
+        }
+    }
+
 }

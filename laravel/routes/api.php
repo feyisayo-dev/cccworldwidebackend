@@ -30,7 +30,7 @@ Route::post('/logout', [MemberController::class, 'logout']);
 
 //member API
 // Route::get('/Allmember',[MemberController::class,'fetchAllMembers']);
-Route::post('/Addmember', [MemberController::class, 'Addmember']);
+// Route::post('/Addmember', [MemberController::class, 'Addmember']);
 // Route::get('/member/{userid}',[MemberController::class,'GetMember']);
 // Route::put('/member/{userid}/update',[MemberController::class,'updateMember']);
 // Route::delete('/member/{userid}/delete',[MemberController::class,'deleteMember']);
@@ -70,7 +70,7 @@ Route::post('/Addmember', [MemberController::class, 'Addmember']);
 Route::get('/member/{userid}', [MemberController::class, 'GetMember']);
 Route::post('/member/{userid}/update', [MemberController::class, 'updateMember']);
 Route::delete('/member/{userid}/delete', [MemberController::class, 'deleteMember']);
-Route::get('Allmember', [MemberController::class, 'FetchAllMembers']);
+Route::get('/Allmember', [MemberController::class, 'FetchAllMembers']);
 // });
 
 
@@ -120,7 +120,7 @@ Route::put('title/{id}/update', [adminController::class, 'updateTitle']);
 // Route::get('getAtitle/{Id}', [adminController::class, 'GetAtitle']);
 Route::get('getAlltitle', [adminController::class, 'FetchAlltitle']);
 // Route::post('updatetitle/{Id}/update', [adminController::class, 'updatetitle']);
-// Route::get('getTitleByGender/{gender}', [adminController::class, 'getTitleByGender']);
+Route::get('getTitleByGender/{gender}', [adminController::class, 'getTitleByGender']);
 // Route::delete('deletetitle/{Id}/delete', [adminController::class, 'Deletetitle']);
 
 
@@ -131,14 +131,14 @@ Route::get('Allnational', [adminController::class, 'FetchAllNatinal']);
 Route::get('getAnational/{code}/get', [adminController::class, 'getNational']);
 Route::post('Addnational', [adminController::class, 'AddNewNatinal']);
 Route::put('updatenational/{code}/update', [adminController::class, 'UpdateNational']);
-Route::delete('deletenational/{code}/delete', [adminController::class, 'deleteNational']);
+// Route::delete('deletenational/{code}/delete', [adminController::class, 'deleteNational']);
 
 //State
 Route::get('Allstate', [adminController::class, 'FetchAllState']);
 // Route::post('Addstate',[adminController::class,'AddNewState']);
 Route::get('State/{scode}', [adminController::class, 'GetAState']);
 Route::put('updatestate/{scode}/update', [adminController::class, 'UpdateState']);
-Route::delete('deletestate/{scode}/delete', [adminController::class, 'deleteState']);
+// Route::delete('deletestate/{scode}/delete', [adminController::class, 'deleteState']);
 
 //area
 Route::get('Allarea', [adminController::class, 'FetchAllarea']);
@@ -156,7 +156,7 @@ Route::delete('Deleteprovince/{pcode}/delete', [adminController::class, 'DeleteP
 Route::get('Allcircuit', [adminController::class, 'FetchAllCircuit']);
 Route::get('Circuit/{cicode}', [adminController::class, 'GetACircuit']);
 Route::put('UpdateCicuit/{cicode}/update', [adminController::class, 'UpdateCircuit']);
-Route::delete('DeleteCircuit/{cicode}/delete', [adminController::class, 'DeleteCircuit']);
+// Route::delete('DeleteCircuit/{cicode}/delete', [adminController::class, 'DeleteCircuit']);
 
 
 //District
@@ -164,7 +164,7 @@ Route::delete('DeleteCircuit/{cicode}/delete', [adminController::class, 'DeleteC
 Route::get('AllDistrict', [adminController::class, 'FetchAllDistrict']);
 Route::get('District/{dcode}', [adminController::class, 'GetADistrict']);
 Route::put('UpdateDistrict/{dcode}/update', [adminController::class, 'UpdateDistrict']);
-Route::delete('DeleteDistrict/{dcode}/delete', [adminController::class, 'DeleteDistrict']);
+// Route::delete('DeleteDistrict/{dcode}/delete', [adminController::class, 'DeleteDistrict']);
 
 //Parish
 Route::post('AddParish', [adminController::class, 'AddNewParish']);
@@ -179,7 +179,8 @@ Route::get('getParishByState/{state}', [adminController::class, 'getParishByStat
 //get all parishes or one parish
 Route::get('getAllParishes', [adminController::class, 'fetchAllParishes']);
 Route::get('getAParish/{parishcode}', [adminController::class, 'FetchAllParishes']);
-
+Route::post('deleteAParish', [adminController::class, 'deleteAparish']);
+Route::post('updateAparish', [adminController::class, 'updateAparish']);
 // EVENT END POINT
 Route::post('AddEvent', [adminController::class, 'AddNewEvent']);
 Route::get('AllEvent', [adminController::class, 'FetchAllEvent']);
@@ -198,7 +199,7 @@ Route::delete('DeleteVineyard/{Id}/delete', [adminController::class, 'DeleteVine
 Route::post('AddMinistry', [adminController::class, 'AddNewMinistry']);
 Route::get('AllMinistry', [adminController::class, 'FetchAllMinistry']);
 //Route::get('Vineyard/{Id}',[adminController::class,'GetAnEvent']);
-Route::post('updateMinistry/{Id}/update', [adminController::class, 'updateMinistry']);
+Route::post('updateMinistry', [adminController::class, 'updateMinistry']);
 Route::delete('DeleteMinistry/{Id}/delete', [adminController::class, 'DeleteMinistry']);
 
 // VISITOR END POINT
@@ -234,5 +235,11 @@ Route::get('getAMemberPaymentForAcommitte/{memberId}/{committeRefno}', [MemberCo
 
 Route::get('getACommitteeNamePayment/{Id}', [MemberController::class, 'GetACommitteeNamePayment']);
 Route::post('changeCommitteePayment', [MemberController::class, 'changeCommitteePayment']);
+
+//baptism
+Route::post('fetchAllBaptismRecords', [MemberController::class, 'fetchAllBaptismRecords']);
+Route::get('fetchBaptismRecord', [MemberController::class, 'fetchBaptismRecord']);
+Route::post('AddBaptismRecord', [MemberController::class, 'AddBaptismRecord']);
+
 
 

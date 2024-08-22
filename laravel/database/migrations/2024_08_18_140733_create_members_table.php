@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('sname');
             $table->string('fname');
-            $table->string('mname');
+            $table->string('mname')->nullable();
             $table->string('Gender');
             $table->string('dob');
             $table->string('mobile');
@@ -31,8 +31,8 @@ return new class extends Migration
             $table->string('dot');
             $table->string('MStatus');
             $table->string('ministry');
-            $table->string('Status');
-            $table->string('thumbnail');
+            $table->string('Status')->nullable();
+            $table->string('thumbnail')->nullable();
             $table->string('parishcode');
             $table->string('parishname');
             $table->string('role');
