@@ -71,6 +71,7 @@ Route::get('/member/{userid}', [MemberController::class, 'GetMember']);
 Route::post('/member/{userid}/update', [MemberController::class, 'updateMember']);
 Route::delete('/member/{userid}/delete', [MemberController::class, 'deleteMember']);
 Route::get('/Allmember', [MemberController::class, 'FetchAllMembers']);
+Route::get('/Fetchmemberbyparish/{pcode}', [MemberController::class, 'Fetchmemberbyparish']);
 // });
 
 
@@ -217,6 +218,7 @@ Route::get('GetCountries', [adminController::class, 'fetchCountries']);
 Route::post('addcommittee', [adminController::class, 'addCommittee']);
 Route::get('getACommittee/{Id}', [adminController::class, 'GetACommittee']);
 Route::get('getAllCommittee', [adminController::class, 'FetchAllCommittee']);
+Route::get('getCommittee/{pcode}', [adminController::class, 'FetchCommittee']);
 Route::post('updateCommitee/{Id}/update', [adminController::class, 'updateCommittee']);
 Route::delete('deleteCommittee/{Id}/delete', [adminController::class, 'DeleteCommittee']);
 
@@ -225,7 +227,7 @@ Route::post('addcommitteeMember', [adminController::class, 'addCommitteeMember']
 Route::get('getACommitteeMember/{Id}', [adminController::class, 'GetACommitteeMember']);
 Route::get('getAllCommitteeMember', [adminController::class, 'FetchAllCommitteeMember']);
 Route::post('updateCommiteeMember/update', [adminController::class, 'updateCommitteeMember']);
-Route::post('changeCommitteeMember', [adminController::class, 'changeCommitteeMember']);
+Route::post('deleteCommitteeMember/{Id}/delete', [adminController::class, 'deleteCommitteeMember']);
 
 
 //payment

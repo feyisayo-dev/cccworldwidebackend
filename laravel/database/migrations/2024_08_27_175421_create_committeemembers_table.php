@@ -11,16 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('committemember', function (Blueprint $table) {
+        Schema::create('committeemembers', function (Blueprint $table) {
             $table->id();
             $table->string('committeRefno');
             $table->string('committeName');
-            $table->string('memberId');
-            $table->string('memberName');
-            $table->string('memberRole');
-            $table->string('roleId');
-            $table->string('roleName');
-            $table->timestamps();
+            $table->string('chairman');
+            $table->string('chairperson');
+            $table->string('secretary');
+            $table->string('Fsecretary');
+            $table->string('treasurer');
+            $table->string('Mmembers');
+            $table->string('Fmembers');
         });
     }
 
@@ -29,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('committemember');
+        Schema::dropIfExists('committeemembers');
     }
 };

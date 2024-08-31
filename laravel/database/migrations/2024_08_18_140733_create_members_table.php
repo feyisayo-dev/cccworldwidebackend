@@ -22,13 +22,13 @@ return new class extends Migration
             $table->string('Gender');
             $table->string('dob');
             $table->string('mobile');
-            $table->string('Altmobile');
+            $table->string('Altmobile')->nullable();
             $table->string('Residence');
             $table->string('Country');
             $table->string('State');
             $table->string('City');
             $table->string('Title');
-            $table->string('dot');
+            $table->string('dot')->nullable();
             $table->string('MStatus');
             $table->string('ministry');
             $table->string('Status')->nullable();

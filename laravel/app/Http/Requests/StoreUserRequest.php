@@ -41,7 +41,7 @@ class StoreUserRequest extends FormRequest
             'State' => 'required|string|max:191',
             'City' => 'nullable|string|max:191',
             'Title' => 'required|string|max:191',
-            'dot' => 'required|string|max:191',
+            'dot' => 'nullable|string|max:191',
             'MStatus' => 'required|string|max:191',
             'ministry' => 'nullable|string|max:191',
             'parishname' => 'required|string|max:191',

@@ -10,7 +10,7 @@ class event extends Model
     use HasFactory;
 
 
-    protected $table ='event';
+    protected $table = 'event';
 
     protected $fillable = [
         'EventId',
@@ -20,19 +20,14 @@ class event extends Model
         'enddate',
         'Time',
         'Moderator',
+        'end_time',
+        'start_time',
         'Minister',
+        'guest',
+        'location',
         'Type',
         'parishcode',
         'parishname',
         'eventImg',
-       ];
-
-
-
-
-
-
-
-
-
+    ];
 }

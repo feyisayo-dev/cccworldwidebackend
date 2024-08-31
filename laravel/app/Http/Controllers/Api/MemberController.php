@@ -8,14 +8,14 @@ use App\Models\baptism;
 use App\Models\committee;
 use Illuminate\Http\Request;
 use App\Traits\HttpResponses;
-use App\Models\committemember;
+use App\Models\committeemember;
 use App\Models\juvelineharvest;
 use App\Http\Requests\LoginRequest;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
-use App\Models\committememberpayment;
+use App\Models\committeememberpayment;
 use App\Http\Requests\StoreUserRequest;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -67,6 +67,7 @@ class MemberController extends Controller
 
                 $thumbnailPath = Storage::url($member->thumbnail);
                 $thumnailPublicpath = URL::to($thumbnailPath);
+                Log::info("Image path: " . json_encode($thumnailPublicpath));
 
                 if ($member['role'] === 'Client') {
 
@@ -87,19 +88,24 @@ class MemberController extends Controller
                             // $member
                             'id' => $member->id,
                             'sname' => $member->sname,
+                            'mname' => $member->mname,
                             'fname' => $member->fname,
                             'Title' => $member->Title,
                             'UserId' => $member->UserId,
                             'dob' => $member->dob,
+                            'dot' => $member->dot,
                             'mobile' => $member->mobile,
+                            'Altmobile' => $member->Altmobile,
                             'Gender' => $member->Gender,
+                            'Status' => $member->Status,
+                            'MStatus' => $member->MStatus,
                             'avatar' => $thumnailPublicpath,
                             'email' => $member->email,
                             'ministry' => $member->ministry,
                             'Residence' => $member->Residence,
                             'Country' => $member->Country,
                             'State' => $member->State,
-                            'City' => $member->email,
+                            'City' => $member->City,
                             'role' => $member->role,
                             'parishcode' => $member->parishcode,
                             'parishname' => $member->parishname,
@@ -121,18 +127,23 @@ class MemberController extends Controller
                             'id' => $member->id,
                             'sname' => $member->sname,
                             'fname' => $member->fname,
+                            'mname' => $member->mname,
                             'Title' => $member->Title,
                             'UserId' => $member->UserId,
+                            'Altmobile' => $member->Altmobile,
+                            'dot' => $member->dot,
                             'dob' => $member->dob,
                             'mobile' => $member->mobile,
                             'Gender' => $member->Gender,
+                            'Status' => $member->Status,
+                            'MStatus' => $member->MStatus,
                             'avatar' => $thumnailPublicpath,
                             'email' => $member->email,
                             'ministry' => $member->ministry,
                             'Residence' => $member->Residence,
                             'Country' => $member->Country,
                             'State' => $member->State,
-                            'City' => $member->email,
+                            'City' => $member->City,
                             'role' => $member->role,
                             'parishcode' => $member->parishcode,
                             'parishname' => $member->parishname,
@@ -167,27 +178,7 @@ class MemberController extends Controller
         $to = $request->mobile;
 
         // Validation
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required|min:6',
-            'sname' => 'required|string',
-            'fname' => 'required|string',
-            'mname' => 'nullable|string',
-            'Status' => 'nullable|string',
-            'Gender' => 'required|string',
-            'dob' => 'required|date',
-            'mobile' => 'required|string',
-            'Altmobile' => 'nullable|string',
-            'address' => 'required|string',
-            'Country' => 'required|string',
-            'State' => 'required|string',
-            'City' => 'required|string',
-            'Title' => 'required|string',
-            'dot' => 'required|date',
-            'ministry' => 'required|string',
-            'parishcode' => 'required|string',
-            'parishname' => 'required|string',
-        ]);
+        $validator = Validator::make($request->all(), []);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -267,6 +258,25 @@ class MemberController extends Controller
                 'status' => 404,
                 'message' => 'No member records found!',
             ], 200);
+        }
+    }
+
+    public function Fetchmemberbyparish($pcode)
+    {
+
+        $members = member::where('parishcode', '=', $pcode)->get();
+
+        if ($members->isNotEmpty()) {
+            return response()->json([
+                'status' => 200,
+                'message' => 'Records fetched successfully',
+                'records' => $members,  // Return as an array of records
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 404,
+                'message' => 'No records found for the given pcode',
+            ], 404);
         }
     }
 
@@ -448,26 +458,27 @@ class MemberController extends Controller
 
 
     public function updateMember(Request $request, String $UserId)
+
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|max:191',
             'sname' => 'required|string|max:191',
             'fname' => 'required|string|max:191',
-            'mname' => 'required|string|max:191',
+            'mname' => 'nullable|string|max:191',
             'Gender' => 'required|string|max:191',
             'dob' => 'required|string|max:191',
             'mobile' => 'required|string|max:191',
-            'Altmobile' => 'required|string|max:191',
+            'Altmobile' => 'nullable|string|max:191',
             'Residence' => 'required|string|max:191',
             'Country' => 'required|string|max:191',
             'State' => 'required|string|max:191',
             'City' => 'required|string|max:191',
-            'Title' => 'required|string|max:191',
-            'dot' => 'required|string|max:191',
+            'Title' => 'nullable|string|max:191',
+            'dot' => 'nullable|string|max:191',
             'MStatus' => 'required|string|max:191',
             'ministry' => 'required|string|max:191',
-            'Status' => 'required|string|max:191',
-            'thumbnail' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'Status' => 'nullable|string|max:191',
+            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -476,27 +487,24 @@ class MemberController extends Controller
                 'error' => $validator->messages(),
             ], 422);
         } else {
+            $ParismemberCount = member::where('parishcode', $request->parishcode)->count() + 1;
+            $num_padded = sprintf("%02d", $ParismemberCount);
 
             if ($request->hasFile('thumbnail')) {
-                $file = $request->file('thumbnail');
-                $Thumbnail = $UserId . '.' . $file->getClientOriginalExtension();
-                $thumbnailPath = $file->storeAs('thumbnails', $Thumbnail, 'public');
+                $fileUploaded = $request->file('thumbnail');
+                $memberNewPic = $request->parishcode . $num_padded . '.' . $fileUploaded->getClientOriginalExtension();
+                $thumbnailPath = $fileUploaded->storeAs('thumbnails', $memberNewPic, 'public');
             } else {
-                $thumbnailPath = null; // Or provide a default image path
+                $thumbnailPath = "";
             }
 
-            $fetchparish = adminController::FetchAllParishes($request->parishcode)->original['Allparish'];
-            $parishNames = implode(', ', array_column($fetchparish, 'parishname'));
 
-            $member = validator($request->all());
-
-            $member = member::where('UserId', '=', $UserId)->first();
+            $member = Member::where('UserId', '=', $UserId)->first();
+            Log::info("Received Status: " . json_encode($request->Status));
 
             if ($member) {
                 $member->update([
-                    // 'UserId' => $request->UserId,
                     'email' => $request->email,
-                    // 'password' => $request->password,
                     'sname' => $request->sname,
                     'fname' => $request->fname,
                     'mname' => $request->mname,
@@ -515,19 +523,20 @@ class MemberController extends Controller
                     'Status' => $request->Status,
                     'thumbnail' => $thumbnailPath,
                     'parishcode' => $request->parishcode,
-                    'parishname' => $parishNames,
+                    'parishname' => $request->parishname,
                 ]);
+                Log::info("Member updated with Status: " . $member->Status);
+
                 return response()->json([
                     'status' => 200,
-                    'message' => 'Member information updated Sucessfully !',
+                    'message' => 'Member information updated successfully!',
                     'member' => $member,
                 ], 200);
             } else {
-
                 return response()->json([
                     'status' => 500,
                     'message' => 'Update failed as user is not found',
-                ], 200);
+                ], 500);
             }
         }
     }
@@ -1011,7 +1020,7 @@ class MemberController extends Controller
             $committee = committee::where('committeRefno', $request->committeRefno)->first();
             $committeeName = $committee['committeName'];
 
-            $getcommitteeMember = CommitteMember::where('memberId', $request->memberId)
+            $getcommitteeMember = CommitteeMember::where('memberId', $request->memberId)
                 ->where('committeRefno', $request->committeRefno)
                 ->first();
 
@@ -1035,7 +1044,7 @@ class MemberController extends Controller
                     $roleName = "Non-committe Member";
                 }
             }
-            $createCommitteePayment = committememberpayment::create([
+            $createCommitteePayment = committeememberpayment::create([
                 'committeRefno' => $request->committeRefno,
                 'committename' => $committeeName,
                 'UserId' => $request->memberId,
@@ -1066,7 +1075,7 @@ class MemberController extends Controller
     public function GetACommitteeMemberPayment($userId)
     {
 
-        $payments = committememberpayment::where('UserId', $userId)->get();
+        $payments = committeememberpayment::where('UserId', $userId)->get();
 
         if ($payments) {
             return response()->json([
@@ -1085,7 +1094,7 @@ class MemberController extends Controller
     public function GetMemberPymtforACommitee($UserId, $committeRefno)
     {
 
-        $payments = committememberpayment::where('UserId', $UserId)->where('committeRefno', $committeRefno)->get();
+        $payments = committeememberpayment::where('UserId', $UserId)->where('committeRefno', $committeRefno)->get();
 
         if (($payments)) {
             return response()->json([
@@ -1102,7 +1111,7 @@ class MemberController extends Controller
     }
     public function GetACommitteeNamePayment($committeRefno)
     {
-        $allData = committememberpayment::where('committeRefno', '=', 'NIG0120240422182901')->get();
+        $allData = committeememberpayment::where('committeRefno', '=', 'NIG0120240422182901')->get();
         //$allData = committeepayment::where('committeRefno', '=', $committeRefno)->get();
         return $allData;
         if ($allData) {
@@ -1145,7 +1154,7 @@ class MemberController extends Controller
         $gender = $decodeMemberName['Gender'];
         $committename = $decodeMemberName['committename'];
 
-        $getOldcommitteeMemberPayment = committememberpayment::where('UserId', $request->memberId)->where('committeRefno', $request->committeRefno)->first();
+        $getOldcommitteeMemberPayment = committeememberpayment::where('UserId', $request->memberId)->where('committeRefno', $request->committeRefno)->first();
 
         if ($getOldcommitteeMemberPayment && $getNewMemberDetails) {
             // Update the old committee member details with the new member details

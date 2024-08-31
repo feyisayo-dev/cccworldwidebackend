@@ -18,10 +18,11 @@ use App\Models\vineyard;
 use App\Models\visitors;
 use App\Models\committee;
 use Illuminate\Http\Request;
-use App\Models\committemember;
+use App\Models\committeemember;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use WisdomDiala\Countrypkg\Models\Country;
 use Illuminate\Http\ResponseTrait\original;
@@ -174,7 +175,7 @@ class adminController extends Controller
             return response()->json([
                 'status' => 200,
                 'message' => $committeRefno . ' Record fetched successfully',
-                'committee ' => $committee,
+                'committee' => $committee,
             ], 200);
         } else {
             return response()->json([
@@ -183,6 +184,24 @@ class adminController extends Controller
             ], 404);
         }
     }
+
+    public function FetchCommittee($parishcode)
+    {
+        $committee = committee::where('parishcode', '=', $parishcode)->get();
+        if ($committee) {
+            return response()->json([
+                'status' => 200,
+                'message' => 'Record fetched successfully',
+                'committee' => $committee,
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Committee(s) not found',
+            ], 404);
+        }
+    }
+
 
     public function FetchAllCommittee()
     {
@@ -210,11 +229,9 @@ class adminController extends Controller
     public function updateCommittee(Request $request, String $committeRefno)
     {
         $validator = Validator::make($request->all(), [
-            //validator used in input data(Add New Event)-copy and paste
             'committeName' => 'required|string|max:191',
             'from' => 'required|date|max:191',
             'to' => 'required|date|max:191',
-
         ]);
 
         if ($validator->fails()) {
@@ -307,15 +324,15 @@ class adminController extends Controller
             $fullName = $decodeMemberName['fullname']; //key we declarre in decodeMember fn down
             $Gender = $decodeMemberName['gender'];
             $Title = $decodeMemberName['title'];
-            $committemember = committemember::where('memberId', '=', $request->memberId)->first();
-            if ($committemember) {
+            $committeemember = committeemember::where('memberId', '=', $request->memberId)->first();
+            if ($committeemember) {
                 return response()->json([
                     'status' => 401,
                     'message' => 'Member already exist for this Committee !!',
                 ], 422);
             } else {
 
-                $committeeMemberCreateResponse = committemember::create([
+                $committeeMemberCreateResponse = committeemember::create([
                     'committeRefno' => $request->committeRefno,
                     'committeName' => $committeeName,
                     'parishcode' => $request->parishcode,
@@ -346,7 +363,7 @@ class adminController extends Controller
 
     public function GetACommitteeMember($memberId)
     {
-        $comittemember = committemember::where('memberId', '=', $memberId)->first();
+        $comittemember = committeemember::where('memberId', '=', $memberId)->first();
         if ($comittemember) {
             return response()->json([
                 'status' => 200,
@@ -363,17 +380,17 @@ class adminController extends Controller
 
     public function FetchAllCommitteeMember()
     {
-        $comittemember = committemember::all();
+        $comittemember = committeemember::all();
         if ($comittemember->count() > 0) {
             return response()->json([
                 'status' => 200,
                 'message' => 'All Committee Record fetched successfully',
-                'commiteeMembers ' => $comittemember,
+                'committeeMembers' => $comittemember,
             ], 200);
         } else {
             return response()->json([
                 'status' => 404,
-                'message ' => 'No commiteeMembers records found!',
+                'message ' => 'No Commitee Members records found!',
             ], 200);
         }
     }
@@ -396,7 +413,7 @@ class adminController extends Controller
             ], 422);
         }
 
-        $getcommitteeMember = CommitteMember::where('memberId', $request->memberId)
+        $getcommitteeMember = CommitteeMember::where('memberId', $request->memberId)
             ->where('committeRefno', $request->committeRefno)
             ->first();
 
@@ -435,111 +452,22 @@ class adminController extends Controller
         }
     }
 
-    public function changeCommitteeMember(Request $request)
+    public function deleteCommitteeMember($committeRefno)
     {
-        $validator = Validator::make($request->all(), [
-            //validator used in input data-copy and paste
-            'committeRefno' => 'required|string|max:191',
-            'memberId' => 'required|string|max:191',
-            'new_member_id' => 'required|string|max:191',
-            'memberRole' => 'required|string|max:191',
-            'roleId' => 'required|int|max:191',
-            'roleName' => 'required|string|max:191',
-        ]);
+        $committeemember = committeemember::where('committeRefno', '=', $committeRefno)->first();
+        if ($committeemember) {
 
-        if ($validator->fails()) {
+            $committeemember->delete();
             return response()->json([
-                'status' => 422,
-                'error' => $validator->messages(),
-            ], 422);
-        }
-
-        $getcommitteeMember = CommitteMember::where('memberId', $request->new_member_id)
-            ->where('committeRefno', $request->committeRefno)->first();
-
-        if ($getcommitteeMember) {
-            return response()->json([
-                'status' => 401,
-                'message' => $getcommitteeMember['memberName'] . 'is already a member of ' . $getcommitteeMember['committeName'] . ' committee',
-            ], 422);
+                'status' => 200,
+                'message' => 'Committee members deleted successfully',
+            ], 200);
         } else {
-            $getNewMemberDetails = MemberController::GetMember($request->new_member_id); //GetMember function is from Get member controller
-
-            $decodeMemberName = self::decodeMemberName($getNewMemberDetails); // decodeMemberName function is down down
-
-            $fullName = $decodeMemberName['sname'] . ' ' . $decodeMemberName['fname'] . ' ' . $decodeMemberName['mname'];
-            $title = $decodeMemberName['Title'];
-            $gender = $decodeMemberName['Gender'];
-
-            $getOldcommitteeMember = CommitteMember::where('memberId', $request->memberId)->where('committeRefno', $request->committeRefno)->first();
-
-            if ($getOldcommitteeMember && $getNewMemberDetails) {
-                // Update the old committee member details with the new member details
-                $getOldcommitteeMember->update([
-                    'memberName' => $fullName,
-                    'memberId' => $request->new_member_id,
-                    "memberRole" => $request->memberRole,
-                    "roleId"  => $request->roleId,
-                    "roleName" => $request->roleName,
-                    "title"  => $title,
-                    "gender" => $gender,
-                    // Add other fields that you want to update
-                ]);
-
-
-                if ($getOldcommitteeMember) {
-                    return response()->json([
-                        'status' => 200,
-                        'message' => $fullName . ' Nominated as ' . $getOldcommitteeMember['committeName'] . '  member',
-                        'data' => $getOldcommitteeMember,
-                    ], 200);
-                } else {
-                    return response()->json([
-                        'status' => 500,
-                        'message' => $fullName . ' not successfully as  created ' . $getOldcommitteeMember['committeName'] . 'member',
-                    ], 200);
-                }
-            }
+            return response()->json([
+                'status' => 404,
+                'message' => 'title not found',
+            ], 404);
         }
-
-        // $getMember = MemberController::GetMember($request->memberId); //GetMember function is from Get member controller
-        // if (!$getMember) {
-        //     return response()->json([
-        //         'status' => 401,
-        //         'message' => 'Member Name not found !!',
-        //     ], 422);
-        // }
-        // $decodeMemberName = self::decodeMemberName($getMember); // decodeMemberName function is down down
-
-        // $fullName = $decodeMemberName['fullname']; //key we declarre in decodeMember fn down
-        // $Gender = $decodeMemberName['gender'];
-        // $Title = $decodeMemberName['title'];
-
-        // if ($comittemember) {
-        //     return response()->json([
-        //         'status' => 401,
-        //         'message' => 'Member already exist for this Committee !!',
-        //     ], 422);
-
-        //     $comittemember->update([
-        //         'memberName' => $fullName,
-        //         'Title' => $Title,
-        //         'memberRole' => $request->memberRole,
-        //         'roleId' => $request->roleId,
-        //         'roleName' => $request->roleName,
-        //     ]);
-        //     return response()->json([
-        //         'status' => 200,
-        //         'message' => $request->fullName . ' comittemember information updated Sucessfully !',
-        //         'comittemember' => $comittemember,
-        //     ], 200);
-        // } else {
-
-        //     return response()->json([
-        //         'status' => 500,
-        //         'message' => 'Update failed as ' . $request->fullName . ' comittemember is not found',
-        //     ], 200);
-        // }
     }
     public function getTitleByGender($gender)
     {
@@ -2134,21 +2062,26 @@ class adminController extends Controller
 
     public function AddNewEvent(Request $request)
     {
+        Log::info("Received postData: " . json_encode($request->all()));
 
         $validator = Validator::make($request->all(), [
-            //validator used in input data(Add New Parish)-copy and paste
             'Title' => 'required|string|max:191',
-            'Description' => 'required|string|max:191',
-            'startdate' => 'required|string|max:191',
-            'enddate' => 'required|string|max:191',
-            'Time' => 'required|string|max:191',
-            'Moderator' => 'required|string|max:191',
-            'Minister' => 'required|string|max:191',
+            'Description' => 'nullable|string|max:191',
+            'startdate' => 'required|date_format:Y-m-d',
+            'enddate' => 'required|date_format:Y-m-d|after_or_equal:startdate',
+            'start_time' => 'nullable|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i',
+            'Time' => 'required|string',
+            'Moderator' => 'nullable|string|max:191',
+            'Minister' => 'nullable|string|max:191',
+            'guest' => 'nullable|string|max:191',
+            'location' => 'nullable|string|max:191',
             'Type' => 'required|string|max:191',
             'parishcode' => 'required|string|max:191',
-            'eventImg' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            // we dont have to add picode bc we will generate it ourselve
+            'parishname' => 'required|string|max:191',
+            'eventImg' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
 
         if ($validator->fails()) {
             return response()->json([
@@ -2173,17 +2106,6 @@ class adminController extends Controller
             } else {
                 $num_padded = $event + 1;
             }
-
-            $fetchparish = adminController::FetchAllParishes($request->parishcode)->original['Allparish'];
-            if (!$fetchparish) {
-                return response()->json([
-                    'status' => 500,
-                    'message' => 'Parish does not exist',
-                ], 200);
-            }
-
-            $parishNames = implode(', ', array_column($fetchparish, 'parishname'));
-
             if ($request->hasFile('eventImg')) {
 
                 $fileUploaded = $request->file('eventImg');
@@ -2199,14 +2121,17 @@ class adminController extends Controller
                 'Description' => $request->Description,
                 'startdate' => $request->startdate,
                 'enddate' => $request->enddate,
+                'start_time' => $request->start_time,
+                'end_time' => $request->end_time,
                 'Time' => $request->Time,
                 'Moderator' => $request->Moderator,
                 'Minister' => $request->Minister,
+                'guest' => $request->guest,
+                'location' => $request->location,
                 'Type' => $request->Type,
                 'parishcode' => $request->parishcode,
-                'parishname' => $parishNames,
-                'eventImg' => $eventNewPic,
-
+                'parishname' => $request->parishname,
+                'eventImg' => $eventImgPath,
             ]);
 
             if ($event) {
@@ -2225,20 +2150,24 @@ class adminController extends Controller
 
     public function updateEvent(Request $request, String $EventId)
     {
+        Log::info("Received postData for update: " . json_encode($request->all()));
 
         $validator = Validator::make($request->all(), [
-            //validator used in input data(Add New Event)-copy and paste
             'Title' => 'required|string|max:191',
-            'Description' => 'required|string|max:191',
-            'startdate' => 'required|string|max:191',
-            'enddate' => 'required|string|max:191',
+            'Description' => 'nullable|string|max:191',
+            'startdate' => 'required|date_format:Y-m-d',
+            'enddate' => 'required|date_format:Y-m-d|after_or_equal:startdate',
+            'start_time' => 'nullable|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i',
             'Time' => 'required|string|max:191',
-            'Moderator' => 'required|string|max:191',
-            'Minister' => 'required|string|max:191',
+            'Moderator' => 'nullable|string|max:191',
+            'Minister' => 'nullable|string|max:191',
+            'guest' => 'nullable|string|max:191',
+            'location' => 'nullable|string|max:191',
             'Type' => 'required|string|max:191',
             'parishcode' => 'required|string|max:191',
-            'eventImg' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            // we dont have to add EventId bc we will generate it ourselve
+            'parishname' => 'required|string|max:191',
+            'eventImg' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -2246,74 +2175,75 @@ class adminController extends Controller
                 'status' => 422,
                 'error' => $validator->messages(),
             ], 422);
-        } else {
-
-            $fetchparish = adminController::FetchAllParishes($request->parishcode)->original['Allparish'];
-            if (!$fetchparish) {
-
-                return response()->json([
-                    'status' => 500,
-                    'message' => 'Parish does not exist',
-                ], 200);
-            }
-            $parishNames = implode(', ', array_column($fetchparish, 'parishname'));
-
-            if ($request->hasFile('eventImg')) {
-                $file = $request->file('eventImg');
-                $eventImg = $request->EventId . '.' . $file->getClientOriginalExtension();
-                $eventImgPath = $file->storeAs('eventImgs', $eventImg, 'public');
-            } else {
-                $eventImgPath = null; // Or provide a default image path
-            }
-
-            $event = event::where('EventId', '=', $EventId)->first();
-
-            if ($event) {
-                $event->update([
-                    'event' => $request->event,
-                    'Description' => $request->Description,
-                    'startdate' => $request->startdate,
-                    'enddate' => $request->enddate,
-                    'Time' => $request->Time,
-                    'Moderator' => $request->Moderator,
-                    'Minister' => $request->Minister,
-                    'Type' => $request->Type,
-                    'parishcode' => $request->parishcode,
-                    'parishname' => $parishNames,
-                    'eventImg' => $eventImgPath,
-
-                ]);
-                return response()->json([
-                    'status' => 200,
-                    'message' => ' Event information updated Sucessfully !',
-                    'event' => $event,
-                ], 200);
-            } else {
-
-                return response()->json([
-                    'status' => 500,
-                    'message' => 'Update failed as titlt is not found',
-                ], 200);
-            }
         }
+
+        $event = event::where('EventId', '=', $EventId)->first();
+
+        if (!$event) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Event not found',
+            ], 200);
+        }
+
+        if ($request->hasFile('eventImg')) {
+            $file = $request->file('eventImg');
+            $eventNewPic = $request->parishcode . $EventId . '.' . $file->getClientOriginalExtension();
+            $eventImgPath = $file->storeAs('eventImgs', $eventNewPic, 'public');
+        } else {
+            $eventImgPath = $event->eventImg; // Keep the existing image if no new one is provided
+        }
+
+        $event->update([
+            'Title' => $request->Title,
+            'Description' => $request->Description,
+            'startdate' => $request->startdate,
+            'enddate' => $request->enddate,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'Time' => $request->Time,
+            'Moderator' => $request->Moderator,
+            'Minister' => $request->Minister,
+            'guest' => $request->guest,
+            'location' => $request->location,
+            'Type' => $request->Type,
+            'parishcode' => $request->parishcode,
+            'parishname' => $request->parishname,
+            'eventImg' => $eventImgPath,
+        ]);
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Event updated successfully',
+            'event' => $event,
+        ], 200);
     }
+
 
     public function FetchAllEvent()
     {
-        $allevent = event::all();
+        $allevent = Event::all();
         if ($allevent->count() > 0) {
+            $events = $allevent->map(function ($event) {
+                $eventImgsPath = $event->eventImg ? Storage::url($event->eventImg) : null;
+                $event->eventImgsPublicpath = $eventImgsPath ? URL::to($eventImgsPath) : null;
+                Log::info("Received postData: " . json_encode($eventImgsPath));
+                return $event;
+            });
+
             return response()->json([
                 'status' => 200,
                 'message' => 'Record fetched successfully',
-                'events ' => $allevent,
+                'events' => $events,
             ], 200);
         } else {
             return response()->json([
                 'status' => 404,
-                'message ' => 'No event records found!',
+                'message' => 'No event records found!',
             ], 200);
         }
     }
+
 
     public function GetAnEvent($EventId)
     {
@@ -2824,5 +2754,4 @@ class adminController extends Controller
             ], 200);
         }
     }
-
 }

@@ -33,6 +33,7 @@ class member extends Model
         'Title',
         'dot',
         'MStatus',
+        'Status',
         'ministry',
         'thumbnail',
         'regdate',
