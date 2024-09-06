@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Api;
 use App\Models\tithe;
 use App\Models\member;
 use App\Models\baptism;
+use App\Models\offering;
 use App\Models\committee;
 use Illuminate\Http\Request;
+use App\Models\building_levy;
 use App\Traits\HttpResponses;
+use App\Models\baptismPayment;
 use App\Models\committeemember;
 use App\Models\juvelineharvest;
 use App\Http\Requests\LoginRequest;
@@ -564,12 +567,9 @@ class MemberController extends Controller
     {
 
         $validator = Validator::make($request->all(), [
-            //validator used in input data(Add New Parish)-copy and paste
-            'UserId' => 'required|string|max:191',
-            'pymtdate' => 'required|string|max:191',
-            'Amount' => 'required|string|max:191',
-            'pymtImg' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            // we dont have to add picode bc we will generate it ourselve
+            'paidby' => 'required|string|max:191',
+            'amount' => 'required|string|max:191',
+            'paymentdate' => 'required|string|max:191',
         ]);
 
         if ($validator->fails()) {
@@ -579,39 +579,17 @@ class MemberController extends Controller
             ], 422);
         } else {
 
-            $member = member::where('UserId', $request->UserId)->get();
 
-            if ($request->hasFile('pymtImg')) {
 
-                $fileUploaded = $request->file('pymtImg');
-                $paymentImg = $request->pymtdate . '' . $request->UserId . '.' . $fileUploaded->getClientOriginalExtension();
-                $pymtImgPath = $fileUploaded->storeAs('pymtImgs', $paymentImg, 'public');
-            } else {
-                $pymtImgPath = ""; // Or provide a default image path
-            }
-            if (!$member) {
-                return response()->json([
-                    'status' => 500,
-                    'message' => 'Member does not exist',
-                ], 200);
-            } else {
-
-                $Surname = $member[0]['sname'];
-                $FirstName = $member[0]['fname'];
-                $MiddleName = $member[0]['mname'];
-                $pariscode = $member[0]['parishcode'];
-                $parisname = $member[0]['parishname'];
-
-                $tithe = tithe::create([
-                    'UserId' => $request->UserId,
-                    'FullName' => $Surname . ' ' . $FirstName . ' ' . $MiddleName,
-                    'pymtdate' => $request->pymtdate,
-                    'Amount' => $request->Amount,
-                    'parishcode' => $pariscode,
-                    'parishname' => $parisname,
-                    'pymtImg' => $pymtImgPath,
-                ]);
-            }
+            $tithe = tithe::create([
+                'pymtdate' => $request->paymentdate,
+                'Amount' => $request->amount,
+                'parishcode' => $request->parishcode,
+                'parishname' => $request->parishname,
+                'receipt' => $request->receipt,
+                'paidby' => $request->paidby,
+                'paidfor' => $request->paidfor,
+            ]);
 
             if ($tithe) {
 
@@ -625,6 +603,140 @@ class MemberController extends Controller
                 return response()->json([
                     'status' => 500,
                     'message' => 'Something went wrong ' . ' tithe not created',
+                ], 200);
+            }
+        }
+    }
+
+    public function AddNewOffering(Request $request)
+    {
+
+        $validator = Validator::make($request->all(), [
+            'paidby' => 'required|string|max:191',
+            'amount' => 'required|string|max:191',
+            'paymentdate' => 'required|string|max:191',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'error' => $validator->messages(),
+            ], 422);
+        } else {
+
+
+
+            $offering = offering::create([
+                'pymtdate' => $request->paymentdate,
+                'Amount' => $request->amount,
+                'parishcode' => $request->parishcode,
+                'parishname' => $request->parishname,
+                'receipt' => $request->receipt,
+                'paidby' => $request->paidby,
+                'paidfor' => $request->paidfor,
+            ]);
+
+            if ($offering) {
+
+                return response()->json([
+                    'status' => 200,
+                    'message' => ' Offering paid sucessfully',
+                    'offering' => $offering,
+                ], 200);
+            } else {
+
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Something went wrong ' . ' offering not created',
+                ], 200);
+            }
+        }
+    }
+
+    public function AddNewbuildingLevy(Request $request)
+    {
+
+        $validator = Validator::make($request->all(), [
+            'paidby' => 'required|string|max:191',
+            'amount' => 'required|string|max:191',
+            'paymentdate' => 'required|string|max:191',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'error' => $validator->messages(),
+            ], 422);
+        } else {
+
+
+
+            $building_levy = building_levy::create([
+                'pymtdate' => $request->paymentdate,
+                'Amount' => $request->amount,
+                'parishcode' => $request->parishcode,
+                'parishname' => $request->parishname,
+                'receipt' => $request->receipt,
+                'paidby' => $request->paidby,
+                'paidfor' => $request->paidfor,
+            ]);
+
+            if ($building_levy) {
+
+                return response()->json([
+                    'status' => 200,
+                    'message' => 'Building Levy paid sucessfully',
+                    'building_levy' => $building_levy,
+                ], 200);
+            } else {
+
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Something went wrong ' . ' building_levy not created',
+                ], 200);
+            }
+        }
+    }
+    public function AddNewBaptismPayment(Request $request)
+    {
+
+        $validator = Validator::make($request->all(), [
+            'paidby' => 'required|string|max:191',
+            'amount' => 'required|string|max:191',
+            'paymentdate' => 'required|string|max:191',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'error' => $validator->messages(),
+            ], 422);
+        } else {
+
+
+
+            $baptismPayment = baptismPayment::create([
+                'pymtdate' => $request->paymentdate,
+                'Amount' => $request->amount,
+                'parishcode' => $request->parishcode,
+                'parishname' => $request->parishname,
+                'receipt' => $request->receipt,
+                'paidby' => $request->paidby,
+                'paidfor' => $request->paidfor,
+            ]);
+
+            if ($baptismPayment) {
+
+                return response()->json([
+                    'status' => 200,
+                    'message' => ' Baptism paid sucessfully',
+                    'baptismPayment' => $baptismPayment,
+                ], 200);
+            } else {
+
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Something went wrong ' . ' baptismPayment not created',
                 ], 200);
             }
         }
@@ -999,11 +1111,9 @@ class MemberController extends Controller
 
         $validator = Validator::make($request->all(), [
             'committeRefno' => 'required|string|max:191',
-            'memberId' => 'required|string|max:191',
+            'paidby' => 'required|string|max:191',
             'amount' => 'required|string|max:191',
             'paymentdate' => 'required|string|max:191',
-            // 'receiptupload' => 'required|string|max:191',
-
         ]);
 
         if ($validator->fails()) {
@@ -1012,49 +1122,17 @@ class MemberController extends Controller
                 'error' => $validator->messages(),
             ], 422);
         } else {
-            $fullName = " ";
-            $parishcode = "";
-            $parishname = "";
-            $roleName = " ";
-            //get committe Name
-            $committee = committee::where('committeRefno', $request->committeRefno)->first();
-            $committeeName = $committee['committeName'];
 
-            $getcommitteeMember = CommitteeMember::where('memberId', $request->memberId)
-                ->where('committeRefno', $request->committeRefno)
-                ->first();
-
-            if ($getcommitteeMember) {
-                $fullName = $getcommitteeMember['memberName']; //paidby
-                $parishcode = $committee['parishcode'];
-                $parishname = $committee['parishname'];
-                $roleName = $getcommitteeMember['roleName'];
-            } else {
-
-                //Non committee member details-all other member of the parish contribution
-                $getMember = MemberController::GetMember($request->memberId); //GetMember function is from Get member controller
-
-                if ($getMember) {
-                    //decode details
-                    $decodeMemberName = adminController::decodeMemberName($getMember);
-
-                    $fullName = $decodeMemberName['sname'] . ' ' . $decodeMemberName['fname'] . ' ' . $decodeMemberName['mname']; //paidby
-                    $parishcode = $decodeMemberName['parishcode'];
-                    $parishname = $decodeMemberName['parishname'];
-                    $roleName = "Non-committe Member";
-                }
-            }
             $createCommitteePayment = committeememberpayment::create([
                 'committeRefno' => $request->committeRefno,
-                'committename' => $committeeName,
-                'UserId' => $request->memberId,
-                'paidfor' => '',
-                'paidby' => $fullName,
-                'parishcode' => $parishcode,
-                'parishname' => $parishname,
+                'committename' => $request->committeName,
+                'paidfor' => $request->paidfor,
+                'paidby' => $request->paidby,
+                'parishcode' => $request->parishcode,
+                'parishname' => $request->parishname,
                 'amount' => $request->amount,
-                'receipt' => '',
-                'roleName' => $roleName,
+                'receipt' => $request->receipt,
+                'roleName' => $request->roleName,
                 'paymentdate' => $request->paymentdate,
             ]);
 

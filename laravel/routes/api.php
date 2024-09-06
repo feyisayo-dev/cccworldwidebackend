@@ -227,7 +227,7 @@ Route::post('addcommitteeMember', [adminController::class, 'addCommitteeMember']
 Route::get('getACommitteeMember/{Id}', [adminController::class, 'GetACommitteeMember']);
 Route::get('getAllCommitteeMember', [adminController::class, 'FetchAllCommitteeMember']);
 Route::post('updateCommiteeMember/update', [adminController::class, 'updateCommitteeMember']);
-Route::post('deleteCommitteeMember/{Id}/delete', [adminController::class, 'deleteCommitteeMember']);
+Route::delete('deleteCommitteeMember/{Id}/delete', [adminController::class, 'deleteCommitteeMember']);
 
 
 //payment
@@ -243,5 +243,13 @@ Route::post('fetchAllBaptismRecords', [MemberController::class, 'fetchAllBaptism
 Route::get('fetchBaptismRecord', [MemberController::class, 'fetchBaptismRecord']);
 Route::post('AddBaptismRecord', [MemberController::class, 'AddBaptismRecord']);
 
+//allpayments
+Route::get('/all-payments', [AdminController::class, 'getAllPayments']);
+Route::get('getMemberPayment/{Id}', [AdminController::class, 'getMemberPayment']);
 
+
+//newpayments
+Route::post('AddNewOffering', [MemberController::class, 'AddNewOffering']);
+Route::post('AddNewbuildingLevy', [MemberController::class, 'AddNewbuildingLevy']);
+Route::post('AddNewBaptismPayment', [MemberController::class, 'AddNewBaptismPayment']);
 

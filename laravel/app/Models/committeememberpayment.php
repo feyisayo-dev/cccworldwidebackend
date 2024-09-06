@@ -12,7 +12,6 @@ class committeememberpayment extends Model
     protected $fillable = [
         'committeRefno',
         'committename',
-        'UserId',
         'paidfor',
         'paidby',
         'parishcode',
@@ -21,6 +20,5 @@ class committeememberpayment extends Model
         'receipt',
         'paymentdate',
         'roleName',
-
        ];
 }

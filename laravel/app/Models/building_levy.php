@@ -5,10 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class tithe extends Model
+class building_levy extends Model
 {
     use HasFactory;
-    protected $table = 'tithe';
+    protected $table = 'building_levy';
     protected $fillable = [
         'pymtdate',
         'Amount',

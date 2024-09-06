@@ -19,6 +19,7 @@ use App\Models\visitors;
 use App\Models\committee;
 use Illuminate\Http\Request;
 use App\Models\committeemember;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use App\Http\Controllers\Controller;
@@ -287,11 +288,15 @@ class adminController extends Controller
     public function addCommitteeMember(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'committeRefno' => 'required|string|max:191',
-            'memberId' => 'required|string|max:191',
-            'memberRole' => 'required|string|max:191',
-            'roleId' => 'required|int|max:191',
-            'roleName' => 'required|string|max:191',
+            'committeRefno' => 'required|string',
+            'committeName' => 'required|string',
+            'chairman' => 'required|string',
+            'chairperson' => 'nullable|string',
+            'secretary' => 'required|string',
+            'Fsecretary' => 'nullable|string',
+            'treasurer' => 'required|string',
+            'Mmembers' => 'required|string',
+            'Fmembers' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -301,7 +306,6 @@ class adminController extends Controller
             ], 422);
         } else {
 
-            // return ($request->all());
             $committee = committee::where('committeRefno', '=', $request->committeRefno)->first();
 
             if (!$committee) {
@@ -312,51 +316,29 @@ class adminController extends Controller
             }
             $committeeName = $committee['committeName'];
 
-            $getMember = MemberController::GetMember($request->memberId); //GetMember function is from Get member controller
-            if (!$getMember) {
-                return response()->json([
-                    'status' => 401,
-                    'message' => 'Member Name not found !!',
-                ], 422);
-            }
-            $decodeMemberName = self::decodeMemberName($getMember); // decodeMemberName function is down down
 
-            $fullName = $decodeMemberName['fullname']; //key we declarre in decodeMember fn down
-            $Gender = $decodeMemberName['gender'];
-            $Title = $decodeMemberName['title'];
-            $committeemember = committeemember::where('memberId', '=', $request->memberId)->first();
-            if ($committeemember) {
+
+            $committeeMemberCreateResponse = committeemember::create([
+                'committeRefno' => $request->committeRefno,
+                'committeName' => $committeeName,
+                'chairman' => $request->chairman,
+                'chairperson' => $request->chairperson,
+                'secretary' => $request->secretary,
+                'Fsecretary' => $request->Fsecretary,
+                'treasurer' => $request->treasurer,
+                'Mmembers' => $request->Mmembers,
+                'Fmembers' => $request->Fmembers,
+            ]);
+            if ($committeeMemberCreateResponse) {
                 return response()->json([
-                    'status' => 401,
-                    'message' => 'Member already exist for this Committee !!',
-                ], 422);
+                    'status' => 200,
+                    'message' => $committeeName . ' created successfully',
+                ], 200);
             } else {
-
-                $committeeMemberCreateResponse = committeemember::create([
-                    'committeRefno' => $request->committeRefno,
-                    'committeName' => $committeeName,
-                    'parishcode' => $request->parishcode,
-                    'parishname' => $request->parishName,
-                    'memberName' => $fullName,
-                    'memberId' => $fullName,
-                    'Gender' => $Gender,
-                    'Title' => $Title,
-                    'memberRole' => $request->memberRole,
-                    'roleId' => $request->roleId,
-                    'roleName' => $request->roleName,
-
-                ]);
-                if ($committeeMemberCreateResponse) {
-                    return response()->json([
-                        'status' => 200,
-                        'message' => $fullName . ' Nominated as ' . $committeeName . '  member',
-                    ], 200);
-                } else {
-                    return response()->json([
-                        'status' => 500,
-                        'message' => $fullName . ' not successfully as  created ' . $committeeName . 'member',
-                    ], 200);
-                }
+                return response()->json([
+                    'status' => 500,
+                    'message' => $committeeName . ' not successfully as  created ',
+                ], 200);
             }
         }
     }
@@ -398,12 +380,15 @@ class adminController extends Controller
     public function updateCommitteeMember(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            //validator used in input data-copy and paste
-            'committeRefno' => 'required|string|max:191',
-            'memberId' => 'required|string|max:191',
-            'memberRole' => 'required|string|max:191',
-            'roleId' => 'required|int|max:191',
-            'roleName' => 'required|string|max:191',
+            'committeRefno' => 'required|string',
+            'committeName' => 'required|string',
+            'chairman' => 'required|string',
+            'chairperson' => 'nullable|string',
+            'secretary' => 'required|string',
+            'Fsecretary' => 'nullable|string',
+            'treasurer' => 'required|string',
+            'Mmembers' => 'required|string',
+            'Fmembers' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -411,46 +396,47 @@ class adminController extends Controller
                 'status' => 422,
                 'error' => $validator->messages(),
             ], 422);
-        }
-
-        $getcommitteeMember = CommitteeMember::where('memberId', $request->memberId)
-            ->where('committeRefno', $request->committeRefno)
-            ->first();
-
-
-        $committee = committee::where('committeRefno', '=', $request->committeRefno)->first();
-
-        // $committeName=$committee['committeName'];
-
-        if ($getcommitteeMember) {
-
-            $getcommitteeMemberUpdate = $getcommitteeMember->update([
-                'memberRole' => $request->memberRole,
-                'roleId' => $request->roleId,
-                'roleName' => $request->roleName,
-            ]);
-
-            if ($getcommitteeMemberUpdate) {
-                return response()->json([
-                    'status' => 200,
-                    'message' =>  'committee member information updated Sucessfully !',
-                    'data' => $getcommitteeMemberUpdate,
-                ], 200);
-            } else {
-
-                return response()->json([
-                    'status' => 500,
-                    'message' => 'Update failed as ' . $request->fullName . ' comittemember is not found',
-                ], 200);
-            }
         } else {
-            return response()->json([
-                'status' => 200,
-                'message' =>  'Member not found in committee',
-                'committee' => $committee,
-            ], 401);
+
+            $committee = committee::where('committeRefno', '=', $request->committeRefno)->first();
+
+            if (!$committee) {
+                return response()->json([
+                    'status' => 401,
+                    'message' => 'Committee Name not found !!',
+                ], 422);
+            }
+            $committeeName = $committee['committeName'];
+
+
+
+            if ($committee) {
+                $committee->update([
+                    'committeRefno' => $request->committeRefno,
+                    'committeName' => $committeeName,
+                    'chairman' => $request->chairman,
+                    'chairperson' => $request->chairperson,
+                    'secretary' => $request->secretary,
+                    'Fsecretary' => $request->Fsecretary,
+                    'treasurer' => $request->treasurer,
+                    'Mmembers' => $request->Mmembers,
+                    'Fmembers' => $request->Fmembers,
+                ]);
+                if ($committee) {
+                    return response()->json([
+                        'status' => 200,
+                        'message' => $committeeName . ' updated successfully',
+                    ], 200);
+                } else {
+                    return response()->json([
+                        'status' => 500,
+                        'message' => $committeeName . ' not successfully updated',
+                    ], 200);
+                }
+            }
         }
     }
+
 
     public function deleteCommitteeMember($committeRefno)
     {
@@ -2754,4 +2740,74 @@ class adminController extends Controller
             ], 200);
         }
     }
+    public function getAllPayments() {
+        $tithePayments = DB::table('tithe')
+            ->select('id', 'pymtdate as payment_date', 'Amount as amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', DB::raw("'Tithe' as payment_type"))
+            ->get();
+
+        $committeePayments = DB::table('committeepayments')
+            ->select('id', 'paymentdate as payment_date', 'amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', 'roleName', DB::raw("'Committee' as payment_type"))
+            ->get();
+
+        $buildingLevyPayments = DB::table('building_levy')
+            ->select('id', 'pymtdate as payment_date', 'Amount as amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', DB::raw("'Building Levy' as payment_type"))
+            ->get();
+
+        $offeringPayments = DB::table('offering')
+            ->select('id', 'pymtdate as payment_date', 'Amount as amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', DB::raw("'Offering' as payment_type"))
+            ->get();
+
+        $baptismPayments = DB::table('baptismpayments')
+            ->select('id', 'pymtdate as payment_date', 'Amount as amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', DB::raw("'Baptism' as payment_type"))
+            ->get();
+
+        $allPayments = $tithePayments->merge($committeePayments)
+                                     ->merge($buildingLevyPayments)
+                                     ->merge($offeringPayments)
+                                     ->merge($baptismPayments);
+
+        return response()->json($allPayments);
+    }
+
+    public function getMemberPayment($userId) {
+        // Fetch tithe payments for the given UserId
+        $tithePayments = DB::table('tithe')
+            ->select('id', 'pymtdate as payment_date', 'Amount as amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', DB::raw("'Tithe' as payment_type"))
+            ->where('paidfor', $userId)
+            ->get();
+
+        // Fetch committee payments for the given UserId
+        $committeePayments = DB::table('committeememberpayment')
+            ->select('id', 'paymentdate as payment_date', 'amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', 'roleName', DB::raw("'Committee' as payment_type"))
+            ->where('paidfor', $userId)
+            ->get();
+
+        // Fetch building levy payments for the given UserId
+        $buildingLevyPayments = DB::table('building_levy')
+            ->select('id', 'pymtdate as payment_date', 'Amount as amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', DB::raw("'Building Levy' as payment_type"))
+            ->where('paidfor', $userId)
+            ->get();
+
+        // Fetch offering payments for the given UserId
+        $offeringPayments = DB::table('offering')
+            ->select('id', 'pymtdate as payment_date', 'Amount as amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', DB::raw("'Offering' as payment_type"))
+            ->where('paidfor', $userId)
+            ->get();
+
+        // Fetch baptism payments for the given UserId
+        $baptismPayments = DB::table('baptism_payment')
+            ->select('id', 'pymtdate as payment_date', 'Amount as amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', DB::raw("'Baptism' as payment_type"))
+            ->where('paidfor', $userId)
+            ->get();
+
+        // Merge all the payments
+        $allPayments = $tithePayments->merge($committeePayments)
+                                     ->merge($buildingLevyPayments)
+                                     ->merge($offeringPayments)
+                                     ->merge($baptismPayments);
+
+        return response()->json($allPayments);
+    }
+
+
 }
