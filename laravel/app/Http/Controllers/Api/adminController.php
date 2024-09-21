@@ -2764,7 +2764,8 @@ class adminController extends Controller
         $allPayments = $tithePayments->merge($committeePayments)
                                      ->merge($buildingLevyPayments)
                                      ->merge($offeringPayments)
-                                     ->merge($baptismPayments);
+                                     ->merge($baptismPayments)
+                                     ->merge($tithePayments);
 
         return response()->json($allPayments);
     }
@@ -2804,6 +2805,7 @@ class adminController extends Controller
         $allPayments = $tithePayments->merge($committeePayments)
                                      ->merge($buildingLevyPayments)
                                      ->merge($offeringPayments)
+                                     ->merge($tithePayments)
                                      ->merge($baptismPayments);
 
         return response()->json($allPayments);
