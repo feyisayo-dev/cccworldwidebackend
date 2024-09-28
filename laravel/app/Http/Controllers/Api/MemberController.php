@@ -78,13 +78,13 @@ class MemberController extends Controller
                         'userAbilities' => [
                             [
                                 'action' => 'read',
-                                'subject' => 'Auth',
+                                'subject' => 'User',
                             ],
+
                             [
                                 'action' => 'read',
-                                'subject' => 'AclDemo',
+                                'subject' => 'Children',
                             ],
-                            // ... add other abilities as needed
                         ],
                         'accessToken' => $member->createToken('API Token of ' . $member->email)->plainTextToken,
                         'userData' => [

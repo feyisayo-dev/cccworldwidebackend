@@ -3004,4 +3004,46 @@ class adminController extends Controller
 
         return response()->json($allPayments);
     }
+
+    public function getChurchPayment($pcode)
+    {
+        // Fetch tithe payments for the given UserId
+        $tithePayments = DB::table('tithe')
+            ->select('id', 'pymtdate as payment_date', 'Amount as amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', DB::raw("'Tithe' as payment_type"))
+            ->where('parishcode', $pcode)
+            ->get();
+
+        // Fetch committee payments for the given UserId
+        $committeePayments = DB::table('committeememberpayment')
+            ->select('id', 'paymentdate as payment_date', 'amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', 'roleName', DB::raw("'Committee' as payment_type"))
+            ->where('parishcode', $pcode)
+            ->get();
+
+        // Fetch building levy payments for the given UserId
+        $buildingLevyPayments = DB::table('building_levy')
+            ->select('id', 'pymtdate as payment_date', 'Amount as amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', DB::raw("'Building Levy' as payment_type"))
+            ->where('parishcode', $pcode)
+            ->get();
+
+        // Fetch offering payments for the given UserId
+        $offeringPayments = DB::table('offering')
+            ->select('id', 'pymtdate as payment_date', 'Amount as amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', DB::raw("'Offering' as payment_type"))
+            ->where('parishcode', $pcode)
+            ->get();
+
+        // Fetch baptism payments for the given UserId
+        $baptismPayments = DB::table('baptism_payment')
+            ->select('id', 'pymtdate as payment_date', 'Amount as amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', DB::raw("'Baptism' as payment_type"))
+            ->where('parishcode', $pcode)
+            ->get();
+
+        // Merge all the payments
+        $allPayments = $tithePayments->merge($committeePayments)
+            ->merge($buildingLevyPayments)
+            ->merge($offeringPayments)
+            ->merge($tithePayments)
+            ->merge($baptismPayments);
+
+        return response()->json($allPayments);
+    }
 }

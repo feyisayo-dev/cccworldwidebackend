@@ -252,6 +252,7 @@ Route::post('AddBaptismRecord', [MemberController::class, 'AddBaptismRecord']);
 //allpayments
 Route::get('/all-payments', [AdminController::class, 'getAllPayments']);
 Route::get('getMemberPayment/{Id}', [AdminController::class, 'getMemberPayment']);
+Route::get('getChurchPayment/{ChurchId}', [AdminController::class, 'getChurchPayment']);
 
 
 //newpayments
