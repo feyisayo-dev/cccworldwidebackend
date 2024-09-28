@@ -13,14 +13,15 @@ return new class extends Migration
     {
         Schema::create('tithe', function (Blueprint $table) {
             $table->id();
-            $table->string('UserId');
-            $table->string('FullName');
-            $table->string('pymtdate');
-            $table->string('Amount');
             $table->string('parishcode');
             $table->string('parishname');
-            $table->string('pymtImg');
-            $table->timestamps();
+            $table->string('Amount');
+            $table->string('receipt');
+            $table->string('paidby');
+            $table->string('paidfor');
+            $table->string('pymtdate');
+            $table->string('created_at');
+            $table->string('updated_at');
         });
     }
 

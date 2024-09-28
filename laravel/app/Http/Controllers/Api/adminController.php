@@ -2413,7 +2413,6 @@ class adminController extends Controller
 
                 $ministry = ministry::create([
                     'ministry' => $request->ministry,
-
                 ]);
             }
 
@@ -2630,6 +2629,199 @@ class adminController extends Controller
         ], 200);
     }
 
+    public function FetchAllStates()
+    {
+
+        // Fetch only the required columns: name, short_name, flag_img, and country_code
+        $states = countrystate::select('country_id', 'name')->get();
+
+        if ($states->count() > 0) {
+            return response()->json([
+                'status' => 200,
+                'message' => 'Record fetched successfully',
+                'states' => $states,
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 404,
+                'message' => 'No states records found!',
+            ], 200);
+        }
+    }
+
+    public function AddNewCountry(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string',
+            'short_name' => 'required|string',
+            'flag_img' => 'required|string',
+            'country_code' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'error' => $validator->messages(),
+            ], 422);
+        } else {
+            $AddCountryCreateResponse = Country::create([
+                'name' => $request->name,
+                'short_name' => $request->short_name,
+                'flag_img' => $request->flag_img,
+                'country_code' => $request->country_code,
+            ]);
+            if ($AddCountryCreateResponse) {
+                return response()->json([
+                    'status' => 200,
+                    'message' => $request->name . ' created successfully',
+                ], 200);
+            } else {
+                return response()->json([
+                    'status' => 500,
+                    'message' => $request->name . ' not successfully as  created ',
+                ], 200);
+            }
+        }
+    }
+
+    public function AddNewStates(Request $request)
+    {
+        // Validate the request input
+        $validator = Validator::make($request->all(), [
+            'country_id' => 'required|integer',
+            'name' => 'required|string',
+        ]);
+
+        // If validation fails, return error response
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'error' => $validator->messages(),
+            ], 422);
+        }
+
+        // Try to create the new state
+        $AddStateCreateResponse = countrystate::create([
+            'country_id' => $request->country_id,
+            'name' => $request->name,
+        ]);
+
+        // Check if the state was created successfully
+        if ($AddStateCreateResponse) {
+            return response()->json([
+                'status' => 200,
+                'message' => $request->name . ' created successfully',
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 500,
+                'message' => $request->name . ' creation failed',
+            ], 500);
+        }
+    }
+
+
+    public function AddNewCountries(Request $request)
+    {
+        // Validate that the input is an array of countries
+        $validator = Validator::make($request->all(), [
+            'countries' => 'required|array', // Expect an array of countries
+            'countries.*.name' => 'required|string',
+            'countries.*.short_name' => 'required|string',
+            'countries.*.flag_img' => 'required|string',
+            'countries.*.country_code' => 'nullable|string',
+        ]);
+
+        // Handle validation errors
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'error' => $validator->messages(),
+            ], 422);
+        } else {
+            // Prepare data for batch insertion
+            $countriesData = [];
+
+            foreach ($request->countries as $country) {
+                $countriesData[] = [
+                    'name' => $country['name'],
+                    'short_name' => $country['short_name'],
+                    'flag_img' => $country['flag_img'],
+                    'country_code' => $country['country_code'],
+                    'created_at' => now(), // Set created_at and updated_at timestamps
+                    'updated_at' => now(),
+                ];
+            }
+
+            // Insert data into the 'countries' table in one batch
+            $AddCountryCreateResponse = Country::insert($countriesData);
+
+            if ($AddCountryCreateResponse) {
+                return response()->json([
+                    'status' => 200,
+                    'message' => 'Countries created successfully',
+                ], 200);
+            } else {
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Countries not successfully created',
+                ], 500);
+            }
+        }
+    }
+    public function AddMultipleStates(Request $request)
+    {
+        // Validate the request input
+        $validator = Validator::make($request->all(), [
+            'states' => 'required|array', // Ensure states is an array
+            'states.*.country_id' => 'required|integer', // Validate each state's country_id
+            'states.*.name' => 'required|string', // Validate each state's name
+        ]);
+
+        // If validation fails, return error response
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'error' => $validator->messages(),
+            ], 422);
+        }
+
+        // Iterate over the array of states and create them
+        foreach ($request->states as $stateData) {
+            countrystate::create([
+                'country_id' => $stateData['country_id'],
+                'name' => $stateData['name'],
+            ]);
+        }
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'States created successfully',
+        ], 200);
+    }
+
+
+    public function FetchAllCountry()
+    {
+        Log::error("Api got here");
+
+        // Fetch only the required columns: name, short_name, flag_img, and country_code
+        $countries = Country::select('name', 'short_name', 'flag_img', 'country_code')->get();
+
+        if ($countries->count() > 0) {
+            return response()->json([
+                'status' => 200,
+                'message' => 'Record fetched successfully',
+                'countries' => $countries,
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 404,
+                'message' => 'No country records found!',
+            ], 200);
+        }
+    }
+
     public static function sendSmsViaApp($from, $to, $body, $api_token, $append_sender, $direct_refund)
     {
         $url = 'https://www.bulksmsnigeria.com/api/v2/sms';
@@ -2740,12 +2932,13 @@ class adminController extends Controller
             ], 200);
         }
     }
-    public function getAllPayments() {
+    public function getAllPayments()
+    {
         $tithePayments = DB::table('tithe')
             ->select('id', 'pymtdate as payment_date', 'Amount as amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', DB::raw("'Tithe' as payment_type"))
             ->get();
 
-        $committeePayments = DB::table('committeepayments')
+        $committeePayments = DB::table('committeememberpayment')
             ->select('id', 'paymentdate as payment_date', 'amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', 'roleName', DB::raw("'Committee' as payment_type"))
             ->get();
 
@@ -2757,20 +2950,21 @@ class adminController extends Controller
             ->select('id', 'pymtdate as payment_date', 'Amount as amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', DB::raw("'Offering' as payment_type"))
             ->get();
 
-        $baptismPayments = DB::table('baptismpayments')
+        $baptismPayments = DB::table('baptism_payment')
             ->select('id', 'pymtdate as payment_date', 'Amount as amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', DB::raw("'Baptism' as payment_type"))
             ->get();
 
         $allPayments = $tithePayments->merge($committeePayments)
-                                     ->merge($buildingLevyPayments)
-                                     ->merge($offeringPayments)
-                                     ->merge($baptismPayments)
-                                     ->merge($tithePayments);
+            ->merge($buildingLevyPayments)
+            ->merge($offeringPayments)
+            ->merge($baptismPayments)
+            ->merge($tithePayments);
 
         return response()->json($allPayments);
     }
 
-    public function getMemberPayment($userId) {
+    public function getMemberPayment($userId)
+    {
         // Fetch tithe payments for the given UserId
         $tithePayments = DB::table('tithe')
             ->select('id', 'pymtdate as payment_date', 'Amount as amount', 'parishcode', 'parishname', 'receipt', 'paidby', 'paidfor', DB::raw("'Tithe' as payment_type"))
@@ -2803,13 +2997,11 @@ class adminController extends Controller
 
         // Merge all the payments
         $allPayments = $tithePayments->merge($committeePayments)
-                                     ->merge($buildingLevyPayments)
-                                     ->merge($offeringPayments)
-                                     ->merge($tithePayments)
-                                     ->merge($baptismPayments);
+            ->merge($buildingLevyPayments)
+            ->merge($offeringPayments)
+            ->merge($tithePayments)
+            ->merge($baptismPayments);
 
         return response()->json($allPayments);
     }
-
-
 }

@@ -76,6 +76,12 @@ Route::get('/Fetchmemberbyparish/{pcode}', [MemberController::class, 'Fetchmembe
 
 
 Route::post('Addmember', [MemberController::class, 'Addmember']);
+Route::get('FetchAllCountries', [adminController::class, 'FetchAllCountry']);
+Route::get('FetchAllState', [adminController::class, 'FetchAllStates']);
+Route::post('AddNewState', [adminController::class, 'AddNewStates']);
+Route::post('AddNewCountry', [adminController::class, 'AddNewCountry']);
+Route::post('AddMultipleCountries', [adminController::class, 'AddNewCountries']);
+Route::post('AddMultipleStates', [adminController::class, 'AddMultipleStates']);
 
 // Tithe
 Route::post('AddNewTithe', [MemberController::class, 'AddNewTithe']);
@@ -239,7 +245,7 @@ Route::get('getACommitteeNamePayment/{Id}', [MemberController::class, 'GetACommi
 Route::post('changeCommitteePayment', [MemberController::class, 'changeCommitteePayment']);
 
 //baptism
-Route::post('fetchAllBaptismRecords', [MemberController::class, 'fetchAllBaptismRecords']);
+Route::get('fetchAllBaptismRecords', [MemberController::class, 'fetchAllBaptismRecords']);
 Route::get('fetchBaptismRecord', [MemberController::class, 'fetchBaptismRecord']);
 Route::post('AddBaptismRecord', [MemberController::class, 'AddBaptismRecord']);
 
