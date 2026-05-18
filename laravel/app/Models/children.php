@@ -12,12 +12,13 @@ class children extends Model
 
     protected $fillable = [
         'ParentId',
+        'password',
+        'email',
         'sname',
         'fname',
         'mname',
         'Gender',
         'dob',
-        'ministry',
        ];
 
 
@@ -25,8 +26,8 @@ class children extends Model
        {
            return $this->belongsTo(member::class, 'ParentId', 'UserId');
        }
-   
+
        protected $hidden= ['id'];
-   
+
 }
 

@@ -14,9 +14,13 @@ use App\Models\district;
 use App\Models\ministry;
 use App\Models\national;
 use App\Models\province;
+use App\Models\schedule;
 use App\Models\vineyard;
 use App\Models\visitors;
 use App\Models\committee;
+use App\Models\department;
+use App\Models\announcement;
+use App\Models\titleRequest;
 use Illuminate\Http\Request;
 use App\Models\committeemember;
 use Illuminate\Support\Facades\DB;
@@ -494,9 +498,6 @@ class adminController extends Controller
 
     public function updateTitle(Request $request, Int $id)
     {
-        error_log('get here');
-
-
         $validator = Validator::make($request->all(), [
             'gender' => 'required|string|max:191',
             'title' => 'required|string|max:191',
@@ -538,7 +539,7 @@ class adminController extends Controller
 
                 return response()->json([
                     'status' => 500,
-                    'message' => 'Update failed as titlt is not found',
+                    'message' => 'Update failed as title is not found',
                 ], 200);
             }
         }
@@ -770,8 +771,9 @@ class adminController extends Controller
     public function addProvinceParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory)
     {
 
-        $countryDetails = country::where('id', $country)->first();
-        // $CountryCode = strtoupper(substr($countryDetails->name, 0, 3));
+        $countryDetails = country::where('id', '=', $country)->first();
+        Log::info("Country gotten: " . json_encode($country));
+
         $countState = province::where('state', 'LIKE', '%' . $parishState . '%')->count();
 
         $scode = strtoupper(substr($parishState, 0, 2));
@@ -951,7 +953,7 @@ class adminController extends Controller
         }
     }
 
-    public function UpdateNational(Request $request, string $code)
+    public function UpdateNational(Request $request, string $code, $newcode)
     {
         $data = $request->postData;
 
@@ -1050,7 +1052,7 @@ class adminController extends Controller
         }
     }
 
-    public function UpdateState(Request $request, string $scode)
+    public function UpdateState(Request $request, string $scode, $newcode)
     {
         $data = $request->postData;
 
@@ -1172,7 +1174,7 @@ class adminController extends Controller
         }
     }
 
-    public function UpdateRegion(Request $request, string $rcode)
+    public function UpdateRegion(Request $request, string $rcode, $newcode)
     {
         $data = $request->postData;
 
@@ -1226,7 +1228,7 @@ class adminController extends Controller
     }
 
 
-    public function UpdateArea(Request $request, string $acode)
+    public function UpdateArea(Request $request, string $acode, $newcode)
     {
         $data = $request->postData;
 
@@ -1354,7 +1356,7 @@ class adminController extends Controller
         }
     }
 
-    public function UpdateProvince(Request $request, string $pcode)
+    public function UpdateProvince(Request $request, string $pcode, $newcode)
     {
         $data = $request->postData;
 
@@ -1494,7 +1496,7 @@ class adminController extends Controller
         }
     }
 
-    public function UpdateCircuit(Request $request, string $cicode)
+    public function UpdateCircuit(Request $request, string $cicode, $newcode)
     {
         $data = $request->postData;
 
@@ -1644,7 +1646,7 @@ class adminController extends Controller
         }
     }
 
-    public function UpdateDistrict(Request $request, string $dcode)
+    public function UpdateDistrict(Request $request, string $dcode, $newcode)
     {
         $data = $request->postData;
 
@@ -1714,7 +1716,7 @@ class adminController extends Controller
     }
 
     //Use to add all parish from national to the lowest
-    public function AddNewParish(Request $request)
+    public function AddNewParish(Request $request, $current_parishCategory)
     {
 
         $parishName = $request->postData['name'];
@@ -1726,38 +1728,63 @@ class adminController extends Controller
         $parishState = $request->postData['state'];
         $city = $request->postData['city'];
         $reportTo = $request->postData['reportTo'];
-        $parishCategory = $request->postData['category'];
 
-        if (isset($parishCategory) && ($parishCategory) == 'national') {
-            //add national parish
-            $status = self::AddNationalParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $parishCategory);
-            return $status;
-            //add state parish
-        } elseif (isset($parishCategory) && ($parishCategory) == 'state') {
-
-            $status = self::addStateParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
-            return $status;
-        } elseif (isset($parishCategory) && ($parishCategory) == 'region') {
-
-
-
-            $status = self::addRegionParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
-            return $status;
-        } elseif (isset($parishCategory) && ($parishCategory) == 'area') {
-            $status = self::addAreaParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
-            return $status;
-        } elseif (isset($parishCategory) && ($parishCategory) == 'province') {
-            $status = self::addProvinceParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
-            return $status;
-        } elseif (isset($parishCategory) && ($parishCategory) == 'circuit') {
-            $status = self::addCircuitParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
-            return $status;
-        } elseif (isset($parishCategory) && ($parishCategory) == 'district') {
-            $status = self::addDistrictParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
-            return $status;
+        $countryDetails = country::where('name', '=', $country)->first();
+        $countryID = $countryDetails->id;
+        Log::info("Country id gotten to update: " . json_encode($countryID));
+        if ($current_parishCategory) {
+            if (isset($current_parishCategory) && ($current_parishCategory) == 'national') {
+                $status = self::AddNationalParish($parishName, $email, $phone1, $phone2, $address, $countryID, $parishState, $city, $current_parishCategory);
+                return $status;
+            } elseif (isset($current_parishCategory) && ($current_parishCategory) == 'state') {
+                $status = self::addStateParish($parishName, $email, $phone1, $phone2, $address, $countryID, $parishState, $city, $reportTo, $current_parishCategory);
+                return $status;
+            } elseif (isset($current_parishCategory) && ($current_parishCategory) == 'region') {
+                $status = self::addRegionParish($parishName, $email, $phone1, $phone2, $address, $countryID, $parishState, $city, $reportTo, $current_parishCategory);
+                return $status;
+            } elseif (isset($current_parishCategory) && ($current_parishCategory) == 'area') {
+                $status = self::addAreaParish($parishName, $email, $phone1, $phone2, $address, $countryID, $parishState, $city, $reportTo, $current_parishCategory);
+                return $status;
+            } elseif (isset($current_parishCategory) && ($current_parishCategory) == 'province') {
+                $status = self::addProvinceParish($parishName, $email, $phone1, $phone2, $address, $countryID, $parishState, $city, $reportTo, $current_parishCategory);
+                return $status;
+            } elseif (isset($current_parishCategory) && ($current_parishCategory) == 'circuit') {
+                $status = self::addCircuitParish($parishName, $email, $phone1, $phone2, $address, $countryID, $parishState, $city, $reportTo, $current_parishCategory);
+                return $status;
+            } elseif (isset($current_parishCategory) && ($current_parishCategory) == 'district') {
+                $status = self::addDistrictParish($parishName, $email, $phone1, $phone2, $address, $countryID, $parishState, $city, $reportTo, $current_parishCategory);
+                return $status;
+            } else {
+                $status = self::addParish($parishName, $email, $phone1, $phone2, $address, $countryID, $parishState, $city, $reportTo, $current_parishCategory);
+                return $status;
+            }
         } else {
-            $status = self::addParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
-            return $status;
+            $parishCategory = $request->postData['category'];
+            if (isset($parishCategory) && ($parishCategory) == 'national') {
+                $status = self::AddNationalParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $parishCategory);
+                return $status;
+            } elseif (isset($parishCategory) && ($parishCategory) == 'state') {
+                $status = self::addStateParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
+                return $status;
+            } elseif (isset($parishCategory) && ($parishCategory) == 'region') {
+                $status = self::addRegionParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
+                return $status;
+            } elseif (isset($parishCategory) && ($parishCategory) == 'area') {
+                $status = self::addAreaParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
+                return $status;
+            } elseif (isset($parishCategory) && ($parishCategory) == 'province') {
+                $status = self::addProvinceParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
+                return $status;
+            } elseif (isset($parishCategory) && ($parishCategory) == 'circuit') {
+                $status = self::addCircuitParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
+                return $status;
+            } elseif (isset($parishCategory) && ($parishCategory) == 'district') {
+                $status = self::addDistrictParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
+                return $status;
+            } else {
+                $status = self::addParish($parishName, $email, $phone1, $phone2, $address, $country, $parishState, $city, $reportTo, $parishCategory);
+                return $status;
+            }
         }
     }
 
@@ -1810,46 +1837,71 @@ class adminController extends Controller
         // Log the received postData
         Log::info("Received postData: " . json_encode($request->postData));
 
+        $previous_parishCategory = $request->postData['previous_category'];
         $parishcode = $request->postData['parishcode'];
-        $parishCategory = $request->postData['category'];
+        $current_parishCategory = $request->postData['current_category'];
 
         Log::error("Update param==>" . json_encode($request->postData));
-
-        if (isset($parishCategory) && $parishCategory == 'national') {
-            // Update national parish
-            $status = self::UpdateNational($request, $parishcode);
-            return $status;
-        } elseif (isset($parishCategory) && $parishCategory == 'state') {
-            // Update state parish
-            $status = self::UpdateState($request, $parishcode);
-            return $status;
-        } elseif (isset($parishCategory) && $parishCategory == 'region') {
-            // Update region parish
-            $status = self::UpdateRegion($request, $parishcode);
-            return $status;
-        } elseif (isset($parishCategory) && $parishCategory == 'area') {
-            // Update area parish
-            $status = self::UpdateArea($request, $parishcode);
-            return $status;
-        } elseif (isset($parishCategory) && $parishCategory == 'province') {
-            // Update province parish
-            $status = self::UpdateProvince($request, $parishcode);
-            return $status;
-        } elseif (isset($parishCategory) && $parishCategory == 'circuit') {
-            // Update circuit parish
-            $status = self::UpdateCircuit($request, $parishcode);
-            return $status;
-        } elseif (isset($parishCategory) && $parishCategory == 'district') {
-            // Update district parish
-            $status = self::UpdateDistrict($request, $parishcode);
-            return $status;
+        if ($previous_parishCategory === $current_parishCategory) {
+            if (isset($previous_parishCategory) && $previous_parishCategory == 'national') {
+                // Update national parish
+                $status = self::UpdateNational($request, $parishcode, $current_parishCategory);
+                return $status;
+            } elseif (isset($previous_parishCategory) && $previous_parishCategory == 'state') {
+                // Update state parish
+                $status = self::UpdateState($request, $parishcode, $current_parishCategory);
+                return $status;
+            } elseif (isset($previous_parishCategory) && $previous_parishCategory == 'region') {
+                // Update region parish
+                $status = self::UpdateRegion($request, $parishcode, $current_parishCategory);
+                return $status;
+            } elseif (isset($previous_parishCategory) && $previous_parishCategory == 'area') {
+                // Update area parish
+                $status = self::UpdateArea($request, $parishcode, $current_parishCategory);
+                return $status;
+            } elseif (isset($previous_parishCategory) && $previous_parishCategory == 'province') {
+                // Update province parish
+                $status = self::UpdateProvince($request, $parishcode, $current_parishCategory);
+                return $status;
+            } elseif (isset($previous_parishCategory) && $previous_parishCategory == 'circuit') {
+                // Update circuit parish
+                $status = self::UpdateCircuit($request, $parishcode, $current_parishCategory);
+                return $status;
+            } elseif (isset($previous_parishCategory) && $previous_parishCategory == 'district') {
+                // Update district parish
+                $status = self::UpdateDistrict($request, $parishcode, $current_parishCategory);
+                return $status;
+            } else {
+                // Update general parish
+                $status = self::UpdateParish($request, $parishcode, $current_parishCategory);
+                return $status;
+            }
         } else {
-            // Update general parish
-            $status = self::UpdateParish($request, $parishcode);
-            return $status;
+            // If they are different, delete from the previous category and add to the current category
+            $this->deleteParishFromPreviousCategory($previous_parishCategory, $parishcode);
+            return $this->AddNewParish($request, $current_parishCategory);
         }
     }
-
+    private function deleteParishFromPreviousCategory($previous_parishCategory, $parishcode)
+    {
+        if ($previous_parishCategory == 'national') {
+            national::where('code', $parishcode)->delete();
+        } elseif ($previous_parishCategory == 'state') {
+            state::where('scode', $parishcode)->delete();
+        } elseif ($previous_parishCategory == 'region') {
+            region::where('rcode', $parishcode)->delete();
+        } elseif ($previous_parishCategory == 'area') {
+            area::where('acode', $parishcode)->delete();
+        } elseif ($previous_parishCategory == 'province') {
+            province::where('pcode', $parishcode)->delete();
+        } elseif ($previous_parishCategory == 'circuit') {
+            circuit::where('ccode', $parishcode)->delete();
+        } elseif ($previous_parishCategory == 'district') {
+            district::where('dcode', $parishcode)->delete();
+        } else {
+            parish::where('parishcode', $parishcode)->delete();
+        }
+    }
 
     public function FetchAllParish()
     {
@@ -1896,7 +1948,7 @@ class adminController extends Controller
         }
     }
 
-    public function UpdateParish(Request $request, string $picode)
+    public function UpdateParish(Request $request, string $picode, $newcode)
     {
 
         $data = $request->postData;
@@ -2617,8 +2669,7 @@ class adminController extends Controller
                 'id' => $country->id,
                 'name' => $country->name,
                 'short_name' => $country->short_name,
-                'flag_img' => URL::to($country->flag_img), // Adjust this based on your actual field name
-                // // Include other necessary fields
+                'flag_img' => URL::to($country->flag_img),
                 'states' => $states,
             ];
         });
@@ -2923,7 +2974,7 @@ class adminController extends Controller
             return response()->json([
                 'status' => 200,
                 'message' => 'Record fetched successfully',
-                'members ' => $allmembers,
+                'members' => $allmembers,
             ], 200);
         } else {
             return response()->json([
@@ -3045,5 +3096,223 @@ class adminController extends Controller
             ->merge($baptismPayments);
 
         return response()->json($allPayments);
+    }
+
+    public function getSchedule($pcode)
+    {
+        // Fetch schedules for the specific parish code
+        $schedules = schedule::where('parish_code', $pcode)->get();
+
+        // Check if schedules exist for the parish
+        if ($schedules->count() > 0) {
+            return response()->json([
+                'status' => 200,
+                'message' => 'Schedules fetched successfully',
+                'schedules' => $schedules,
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 200,
+                'message' => 'No schedules found for this parish',
+            ], 200);  // Note: Status code is now 404 for no records
+        }
+    }
+
+    public function getAnnouncement($pcode)
+    {
+        // Fetch schedules for the specific parish code
+        $announcements = announcement::where('parish_code', $pcode)->get();
+
+        // Check if announcements exist for the parish
+        if ($announcements->count() > 0) {
+            return response()->json([
+                'status' => 200,
+                'message' => 'announcements fetched successfully',
+                'announcements' => $announcements,
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 200,
+                'message' => 'No announcements found for this parish',
+            ], 200);  // Note: Status code is now 404 for no records
+        }
+    }
+
+    public function getDepartment($pcode)
+    {
+        // Fetch departments for the specific parish code
+        $departments = department::where('parish_code', $pcode)->get();
+
+        // Check if departments exist for the parish
+        if ($departments->count() > 0) {
+            // Map through each department to append the logo's public URL
+            $departmentsWithLogos = $departments->map(function ($department) {
+                $logoPath = $department->logo ? Storage::url($department->logo) : null;
+                $logoPublicPath = $logoPath ? URL::to($logoPath) : null;
+                $department->logo = $logoPublicPath; // Add the public path to the department object
+                return $department;
+            });
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Departments fetched successfully',
+                'department' => $departmentsWithLogos,
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 200,
+                'message' => 'No department found for this parish',
+            ], 200);
+        }
+    }
+
+    public function GetNewTitle($UserId)
+    {
+        $TitleRequest = titleRequest::where('UserId', $UserId)->get();
+
+        if ($TitleRequest->count() > 0) {
+            return response()->json([
+                'status' => 200,
+                'message' => 'TitleRequest fetched successfully',
+                'department' => $TitleRequest,
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 200,
+                'message' => 'No TitleRequest found for this user',
+            ], 200);
+        }
+    }
+
+    public function AddSchedule(Request $request, $pcode)
+    {
+
+
+        $validator = Validator::make($request->all(), [
+            'parishcode' => 'required|string|max:191',
+            'event' => 'required|string|max:191',
+            'person' => 'required|string|max:191',
+            'date' => 'required|date|max:191',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'error' => $validator->messages(),
+            ], 422);
+        } else {
+            $schedule = schedule::create([
+                'parish_code' => $request->parishcode,
+                'event' => $request->event,
+                'person' => $request->person,
+                'date' => $request->date,
+            ]);
+
+            if ($schedule) {
+
+                return response()->json([
+                    'status' => 200,
+                    'message' => ' schedule added sucessfully',
+                    'schedule' => $schedule,
+                ], 200);
+            } else {
+
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Something went wrong schedule not created',
+                ], 200);
+            }
+        }
+    }
+
+    public function AddAnnouncement(Request $request, $pcode)
+    {
+
+
+        $validator = Validator::make($request->all(), [
+            'parishcode' => 'required|string|max:191',
+            'title' => 'required|string|max:191',
+            'message' => 'required|string|max:191',
+            'date' => 'required|date|max:191',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'error' => $validator->messages(),
+            ], 422);
+        } else {
+            $announcement = announcement::create([
+                'parish_code' => $request->parishcode,
+                'title' => $request->title,
+                'message' => $request->message,
+                'date' => $request->date,
+            ]);
+
+            if ($announcement) {
+
+                return response()->json([
+                    'status' => 200,
+                    'message' => ' announcement added sucessfully',
+                    'announcement' => $announcement,
+                ], 200);
+            } else {
+
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Something went wrong announcement not created',
+                ], 200);
+            }
+        }
+    }
+
+    public function AddDepartment(Request $request, $pcode)
+    {
+        $validator = Validator::make($request->all(), [
+            'parishcode' => 'required|string|max:191',
+            'name' => 'required|string|max:191',
+            'leader' => 'required|string|max:191',
+            'team' => 'required|string',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validate image
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'error' => $validator->messages(),
+            ], 422);
+        } else {
+            // Handle the logo upload
+            if ($request->hasFile('logo')) {
+                $file = $request->file('logo');
+                $DeptNewPic = $request->parishcode . '.' . $file->getClientOriginalExtension();
+                $DeptImgPath = $file->storeAs('DeptImgs', $DeptNewPic, 'public');
+            } else {
+                $DeptImgPath = ""; // Or provide a default image path
+            }
+            // Create department entry
+            $department = department::create([
+                'parish_code' => $request->parishcode,
+                'name' => $request->name,
+                'logo' => $DeptImgPath, // Save the path of the logo
+                'date' => $request->date,
+                'leader' => $request->leader,
+                'team' => $request->team,
+                'status' => $request->status,
+            ]);
+
+            if ($department) {
+                return response()->json([
+                    'status' => 200,
+                    'message' => 'Department added successfully',
+                    'department' => $department,
+                ], 200);
+            } else {
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Something went wrong, department not created',
+                ], 500);
+            }
+        }
     }
 }

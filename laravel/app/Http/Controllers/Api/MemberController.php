@@ -62,8 +62,8 @@ class MemberController extends Controller
         if (!$member) {
             return $this->error(
                 '',
-                "Email address not found! Kindly register as a member to login",
-                200
+                message: "Email address not found! Kindly register as a member to login",
+                code: 200
             );
         } else {
             if ($member && Hash::check($request['password'], $member->password)) {
@@ -368,6 +368,45 @@ class MemberController extends Controller
             }
         }
     }
+
+    public function ChangePassword(Request $request, $UserId)
+    {
+        // Step 1: Validate the request
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:6|confirmed', // Ensure you include confirmation field in the request
+        ]);
+
+        // Step 2: Find the user
+        $member = Member::where('UserId', '=', $UserId)->first(); // Use first() to get a single instance
+
+        // Check if user exists
+        if (!$member) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'User not found',
+            ], 404); // Status code 404
+        }
+
+        // Step 3: Check if current password is correct
+        if (!Hash::check($request->current_password, $member->password)) {
+            return response()->json([
+                'status' => 403,
+                'message' => 'Current password is incorrect',
+            ], 403); // Status code 403
+        }
+
+        // Step 4: Hash the new password and update the user's password
+        $member->password = Hash::make($request->new_password);
+        $member->save();
+
+        // Step 5: Return a success response
+        return response()->json([
+            'status' => 200,
+            'message' => 'Password changed successfully',
+        ], 200); // Status code 200
+    }
+
     // public function fetchAllMembers()
     // {
 
@@ -443,13 +482,20 @@ class MemberController extends Controller
 
     public static function GetMember($UserId)
     {
-        $member = Member::where('UserId', '=', $UserId)->get();
+        $member = Member::where('UserId', '=', $UserId)->first();
 
-        if ($member) {
+        if ($member) { // Check if the member exists
+            // Ensure the thumbnail path is only set if it exists
+            $thumbnailPath = $member->thumbnail ? Storage::url($member->thumbnail) : null;
+            $thumbnailPublicPath = $thumbnailPath ? URL::to($thumbnailPath) : null;
+
+            // Add the public path to the member object
+            $member->thumbnail = $thumbnailPublicPath;
+
             return response()->json([
                 'status' => 200,
                 'message' => 'Record fetched successfully',
-                'member' => $member,
+                'member' => $member, // Return the modified member object with the public path
             ], 200);
         } else {
             return response()->json([
@@ -458,6 +504,7 @@ class MemberController extends Controller
             ], 404);
         }
     }
+
 
 
     public function updateMember(Request $request, String $UserId)
@@ -741,6 +788,52 @@ class MemberController extends Controller
             }
         }
     }
+
+    public function AddNewTitleRequest(Request $request)
+    {
+
+        $validator = Validator::make($request->all(), [
+            'paidby' => 'required|string|max:191',
+            'amount' => 'required|string|max:191',
+            'paymentdate' => 'required|string|max:191',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'error' => $validator->messages(),
+            ], 422);
+        } else {
+
+
+
+            $baptismPayment = baptismPayment::create([
+                'pymtdate' => $request->paymentdate,
+                'Amount' => $request->amount,
+                'parishcode' => $request->parishcode,
+                'parishname' => $request->parishname,
+                'receipt' => $request->receipt,
+                'paidby' => $request->paidby,
+                'paidfor' => $request->paidfor,
+            ]);
+
+            if ($baptismPayment) {
+
+                return response()->json([
+                    'status' => 200,
+                    'message' => ' Baptism paid sucessfully',
+                    'baptismPayment' => $baptismPayment,
+                ], 200);
+            } else {
+
+                return response()->json([
+                    'status' => 500,
+                    'message' => 'Something went wrong ' . ' baptismPayment not created',
+                ], 200);
+            }
+        }
+    }
+
 
     public function GetATithe($UserId)
     {

@@ -76,6 +76,7 @@ Route::get('/Fetchmemberbyparish/{pcode}', [MemberController::class, 'Fetchmembe
 
 
 Route::post('Addmember', [MemberController::class, 'Addmember']);
+Route::post('ChangePassword/{id}', [MemberController::class, 'ChangePassword']);
 Route::get('FetchAllCountries', [adminController::class, 'FetchAllCountry']);
 Route::get('FetchAllState', [adminController::class, 'FetchAllStates']);
 Route::post('AddNewState', [adminController::class, 'AddNewStates']);
@@ -120,7 +121,7 @@ Route::get('children/{parentid}/viewchild', [childrenController::class, 'viewchi
 // Route::get('Alltitle', [adminController::class, 'FetchAlltitle']);
 Route::post('Addtitle', [adminController::class, 'Addnewtitle']);
 Route::delete('title/{id}/delete', [adminController::class, 'deleteTitle']);
-Route::put('title/{id}/update', [adminController::class, 'updateTitle']);
+Route::post('title/{id}/update', [adminController::class, 'updateTitle']);
 
 // add title
 
@@ -248,11 +249,20 @@ Route::post('changeCommitteePayment', [MemberController::class, 'changeCommittee
 Route::get('fetchAllBaptismRecords', [MemberController::class, 'fetchAllBaptismRecords']);
 Route::get('fetchBaptismRecord', [MemberController::class, 'fetchBaptismRecord']);
 Route::post('AddBaptismRecord', [MemberController::class, 'AddBaptismRecord']);
+Route::post('AddSchedule/{ChurchId}', [AdminController::class, 'AddSchedule']);
+
+Route::post('AddAnnouncement/{ChurchId}', [AdminController::class, 'AddAnnouncement']);
+
+Route::post('AddDepartment/{ChurchId}', [AdminController::class, 'AddDepartment']);
 
 //allpayments
 Route::get('/all-payments', [AdminController::class, 'getAllPayments']);
 Route::get('getMemberPayment/{Id}', [AdminController::class, 'getMemberPayment']);
 Route::get('getChurchPayment/{ChurchId}', [AdminController::class, 'getChurchPayment']);
+Route::get('getSchedule/{ChurchId}', [AdminController::class, 'getSchedule']);
+Route::get('getAnnouncement/{ChurchId}', [AdminController::class, 'getAnnouncement']);
+Route::get('getDepartment/{ChurchId}', [AdminController::class, 'getDepartment']);
+Route::post('GetNewTitle/{UserId}', [AdminController::class, '/{ChurchId}']);
 
 
 //newpayments
